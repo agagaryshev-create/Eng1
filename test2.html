@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Test 2: Football</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+    h2 { margin-top: 20px; }
+    .question { margin-bottom: 15px; }
+    .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
+    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Test 2: Football</h1>
+
+<h2>Text 1</h2>
+<p>
+Tom likes sports. He plays football after school with his friends. His team often takes part in local competitions. Tom trains hard because he wants to win a regional tournament next year.
+</p>
+
+<div class="question">
+1. What sport does Tom play?<br>
+<label><input type="radio" name="q1" value="a"> Tennis</label><br>
+<label><input type="radio" name="q1" value="b"> Basketball</label><br>
+<label><input type="radio" name="q1" value="c"> Football</label>
+</div>
+
+<div class="question">
+2. Why does Tom train hard?<br>
+<label><input type="radio" name="q2" value="a"> To join a new club</label><br>
+<label><input type="radio" name="q2" value="b"> To win a tournament</label><br>
+<label><input type="radio" name="q2" value="c"> To impress his friends</label>
+</div>
+
+<div class="btn" onclick="checkTest()">Проверить</div>
+<div id="result"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let currentUser = null;
+  onAuthStateChanged(auth, user => { currentUser = user; });
+
+  window.checkTest = async function() {
+    const answers = {q1:'c', q2:'b'};
+    let score = 0;
+    for (let q of Object.keys(answers)) {
+      const selected = document.querySelector(`input[name="${q}"]:checked`);
+      if(selected && selected.value === answers[q]) score++;
+    }
+
+    document.getElementById("result").innerText = `Ваш результат: ${score} / ${Object.keys(answers).length}`;
+
+    if(!currentUser) { alert("Чтобы сохранить результат — войдите в систему!"); return; }
+
+    await addDoc(collection(db, "results", currentUser.uid, "test2", "attempts"), {
+      score: score,
+      date: new Date()
+    });
+  };
+</script>
+
+</body>
+</html>
