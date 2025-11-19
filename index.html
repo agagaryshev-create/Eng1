@@ -121,6 +121,8 @@ onAuthStateChanged(auth, async (user) => {
 
 // Функция для вывода полной статистики и графика
 async function showFullStats(uid) {
+  console.log("showFullStats вызвана для UID:", uid);
+
   const testIds = ["test1","test2","test3","test4","test5"];
   let totalMaxScore = 0;
   let totalScore = 0;
@@ -131,16 +133,18 @@ async function showFullStats(uid) {
 
   for (let testId of testIds) {
     const attemptsCol = collection(db, "results", uid, testId, "attempts");
-    
     let snapshot;
+
     try {
       snapshot = await getDocs(attemptsCol);
+      console.log(`Документы для ${testId}:`, snapshot.docs.map(doc => doc.data()));
     } catch (err) {
-      console.error("Ошибка при получении данных:", err);
+      console.error("Ошибка получения данных:", err);
       tableHTML += `<p>Не удалось загрузить данные для ${testId}</p>`;
       continue;
     }
 
+    // Определяем максимальный балл за тест
     let maxPoints = 0;
     switch(testId){
       case "test1": maxPoints = 3; break;
@@ -152,32 +156,34 @@ async function showFullStats(uid) {
 
     tableHTML += `<h3>${testId}</h3>`;
 
-    if(snapshot.empty){
+    if (snapshot.empty) {
+      console.log(`${testId} пуст`);
       tableHTML += "<p>Нет попыток</p>";
       continue;
     }
 
     tableHTML += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
-    
+
     snapshot.forEach(doc => {
       const data = doc.data();
 
-      // Проверяем поле date
+      // Обрабатываем дату
       let dateStr = "неизвестно";
       if (data.date) {
         try {
-          dateStr = (data.date.toDate ? data.date.toDate() : new Date(data.date))
-                    .toLocaleString();
-        } catch(e) {
+          const dateObj = data.date.toDate ? data.date.toDate() : new Date(data.date);
+          dateStr = dateObj.toLocaleString();
+        } catch (e) {
           console.warn("Неверный формат даты:", data.date);
         }
       }
 
-      const score = data.score ?? 0; // на случай отсутствия score
+      const score = data.score ?? 0; // если score нет, используем 0
       tableHTML += `<tr><td>${dateStr}</td><td>${score} / ${maxPoints}</td></tr>`;
-      
+
       chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
       chartData.push(score);
+
       totalScore += score;
       totalMaxScore += maxPoints;
     });
@@ -187,9 +193,11 @@ async function showFullStats(uid) {
 
   tableHTML += `<p><strong>Общий результат (сумма всех попыток): ${totalScore} / ${totalMaxScore}</strong></p>`;
   statsDiv.innerHTML = tableHTML;
+  console.log("Статистика обновлена");
 
   // Строим график только если есть данные
   if (chartData.length > 0) {
+    chartCanvas.style.display = "block"; // показываем график
     new Chart(chartCanvas, {
       type: 'line',
       data: {
@@ -212,9 +220,10 @@ async function showFullStats(uid) {
       }
     });
   } else {
-    chartCanvas.style.display = "none"; // скрываем график, если нет данных
+    chartCanvas.style.display = "none"; // скрываем график, если данных нет
   }
 }
+
 
 </script>
 
