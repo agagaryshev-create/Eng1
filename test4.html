@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Test 4: Environment</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+h2 { margin-top: 20px; }
+.question { margin-bottom: 15px; }
+.btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
+input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
+#result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Test 4: Environment</h1>
+
+<h2>Text 1</h2>
+<p>
+Many cities around the world face serious environmental problems. Air pollution, water contamination, and waste management are major concerns. People are encouraged to recycle, use public transport, and plant trees to make their cities greener and healthier.
+</p>
+
+<!-- Задание 1: выбор ответа -->
+<div class="question">
+1. Which of the following is NOT mentioned as an environmental problem?<br>
+<label><input type="radio" name="q1" value="a"> Air pollution</label><br>
+<label><input type="radio" name="q1" value="b"> Water contamination</label><br>
+<label><input type="radio" name="q1" value="c"> Noise from traffic</label>
+</div>
+
+<!-- Задание 2: краткий ответ -->
+<div class="question">
+2. Name one action people are encouraged to do to help the environment:<br>
+<input type="text" name="q2" placeholder="ваш ответ">
+</div>
+
+<!-- Задание 3: выбор правильного варианта -->
+<div class="question">
+3. What is the main idea of the text?<br>
+<label><input type="radio" name="q3" value="a"> Cities are clean and healthy</label><br>
+<label><input type="radio" name="q3" value="b"> People should care about the environment</label><br>
+<label><input type="radio" name="q3" value="c"> Public transport is unsafe</label>
+</div>
+
+<div class="btn" onclick="checkTest()">Проверить</div>
+<div id="result"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ====== Вставьте ваш Firebase конфиг ======
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+onAuthStateChanged(auth, user => { currentUser = user; });
+
+window.checkTest = async function() {
+  let score = 0;
+
+  // Вопрос 1
+  const ans1 = document.querySelector('input[name="q1"]:checked');
+  if(ans1 && ans1.value === 'c') score++;
+
+  // Вопрос 2 (краткий ответ)
+  const ans2 = document.querySelector('input[name="q2"]').value.trim().toLowerCase();
+  const correct2 = ["recycle", "use public transport", "plant trees", "plant a tree"];
+  if(correct2.includes(ans2)) score++;
+
+  // Вопрос 3
+  const ans3 = document.querySelector('input[name="q3"]:checked');
+  if(ans3 && ans3.value === 'b') score++;
+
+  document.getElementById("result").innerText = `Ваш результат: ${score} / 3`;
+
+  if(!currentUser) {
+    alert("Чтобы сохранить результат — войдите в систему!");
+    return;
+  }
+
+  await addDoc(collection(db, "results", currentUser.uid, "test4", "attempts"), {
+    score: score,
+    date: new Date()
+  });
+};
+</script>
+
+</body>
+</html>
