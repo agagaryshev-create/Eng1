@@ -43,7 +43,7 @@ input, button { padding: 5px; margin: 5px 0; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ====== Firebase конфиг ======
 const firebaseConfig = {
@@ -108,7 +108,13 @@ onAuthStateChanged(auth, async (user) => {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline";
     authMsg.innerText = "Вы вошли как: " + user.email;
-    await showFullStats(user.uid);
+    statsDiv.innerText = "Загружаем статистику...";
+    try {
+      await showFullStats(user.uid);
+    } catch (err) {
+      console.error("Ошибка showFullStats:", err);
+      statsDiv.innerText = "Ошибка при загрузке статистики.";
+    }
   } else {
     emailInput.style.display = "inline";
     passwordInput.style.display = "inline";
@@ -120,8 +126,6 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // Функция для вывода полной статистики и графика
-import { doc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
 async function showFullStats(uid) {
   console.log("showFullStats вызвана для UID:", uid);
 
@@ -134,14 +138,13 @@ async function showFullStats(uid) {
   const chartData = [];
 
   for (let testId of testIds) {
-    // Сначала получаем документ test
-    const testDoc = doc(db, "results", uid, testId); // путь к документу (3 сегмента)
-    const attemptsCol = collection(testDoc, "attempts"); // подколлекция (4 сегмента, корректно)
-    
+    const testDoc = doc(db, "results", uid, testId); // документ test
+    const attemptsCol = collection(testDoc, "attempts"); // подколлекция attempts
+
     let snapshot;
     try {
       snapshot = await getDocs(attemptsCol);
-      console.log(`Документы для ${testId}:`, snapshot.docs.map(doc => doc.data()));
+      console.log(`Документы для ${testId}:`, snapshot.docs.map(d => d.data()));
     } catch (err) {
       console.error("Ошибка получения данных:", err);
       tableHTML += `<p>Не удалось загрузить данные для ${testId}</p>`;
@@ -160,7 +163,6 @@ async function showFullStats(uid) {
     tableHTML += `<h3>${testId}</h3>`;
 
     if (snapshot.empty) {
-      console.log(`${testId} пуст`);
       tableHTML += "<p>Нет попыток</p>";
       continue;
     }
@@ -169,24 +171,17 @@ async function showFullStats(uid) {
 
     snapshot.forEach(doc => {
       const data = doc.data();
-
-      // Обрабатываем дату
       let dateStr = "неизвестно";
       if (data.date) {
         try {
           const dateObj = data.date.toDate ? data.date.toDate() : new Date(data.date);
           dateStr = dateObj.toLocaleString();
-        } catch (e) {
-          console.warn("Неверный формат даты:", data.date);
-        }
+        } catch {}
       }
-
-      const score = data.score ?? 0; // если score нет, используем 0
+      const score = data.score ?? 0;
       tableHTML += `<tr><td>${dateStr}</td><td>${score} / ${maxPoints}</td></tr>`;
-
       chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
       chartData.push(score);
-
       totalScore += score;
       totalMaxScore += maxPoints;
     });
@@ -196,11 +191,9 @@ async function showFullStats(uid) {
 
   tableHTML += `<p><strong>Общий результат (сумма всех попыток): ${totalScore} / ${totalMaxScore}</strong></p>`;
   statsDiv.innerHTML = tableHTML;
-  console.log("Статистика обновлена");
 
-  // Строим график только если есть данные
   if (chartData.length > 0) {
-    chartCanvas.style.display = "block"; // показываем график
+    chartCanvas.style.display = "block";
     new Chart(chartCanvas, {
       type: 'line',
       data: {
@@ -223,12 +216,9 @@ async function showFullStats(uid) {
       }
     });
   } else {
-    chartCanvas.style.display = "none"; // скрываем график, если данных нет
+    chartCanvas.style.display = "none";
   }
 }
-
-
-
 </script>
 
 </body>
