@@ -120,6 +120,8 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // Функция для вывода полной статистики и графика
+import { doc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 async function showFullStats(uid) {
   console.log("showFullStats вызвана для UID:", uid);
 
@@ -132,9 +134,11 @@ async function showFullStats(uid) {
   const chartData = [];
 
   for (let testId of testIds) {
-    const attemptsCol = collection(db, "results", uid, testId, "attempts");
+    // Сначала получаем документ test
+    const testDoc = doc(db, "results", uid, testId); // путь к документу (3 сегмента)
+    const attemptsCol = collection(testDoc, "attempts"); // подколлекция (4 сегмента, корректно)
+    
     let snapshot;
-
     try {
       snapshot = await getDocs(attemptsCol);
       console.log(`Документы для ${testId}:`, snapshot.docs.map(doc => doc.data()));
@@ -144,7 +148,6 @@ async function showFullStats(uid) {
       continue;
     }
 
-    // Определяем максимальный балл за тест
     let maxPoints = 0;
     switch(testId){
       case "test1": maxPoints = 3; break;
@@ -223,6 +226,7 @@ async function showFullStats(uid) {
     chartCanvas.style.display = "none"; // скрываем график, если данных нет
   }
 }
+
 
 
 </script>
