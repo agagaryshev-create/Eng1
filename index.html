@@ -119,12 +119,12 @@ async function showFullStats(uid) {
   let totalMaxScore = 0;
   let totalScore = 0;
   let tableHTML = "<h2>История результатов</h2>";
+
   const chartLabels = [];
   const chartData = [];
 
   for (let testId of testIds) {
-    const testDocRef = doc(db, "results", uid, testId);
-    const attemptsCol = collection(testDocRef, "attempts");
+    const attemptsCol = collection(db, "results", uid, testId, "attempts"); // <-- прямой путь к подколлекции
 
     let snapshot;
     try {
@@ -145,9 +145,14 @@ async function showFullStats(uid) {
     }
 
     tableHTML += `<h3>${testId}</h3>`;
-    if (snapshot.empty) { tableHTML += "<p>Нет попыток</p>"; continue; }
+
+    if (snapshot.empty) {
+      tableHTML += "<p>Нет попыток</p>";
+      continue;
+    }
 
     tableHTML += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
+
     snapshot.forEach(doc => {
       const data = doc.data();
       let dateStr = "неизвестно";
@@ -162,6 +167,7 @@ async function showFullStats(uid) {
       totalScore += score;
       totalMaxScore += maxPoints;
     });
+
     tableHTML += "</table>";
   }
 
@@ -177,6 +183,7 @@ async function showFullStats(uid) {
     });
   } else { chartCanvas.style.display = "none"; }
 }
+
 </script>
 
 </body>
