@@ -73,41 +73,57 @@
   <div class="btn" onclick="checkTest()">Проверить</div>
 
   <div id="result"></div>
+  <h2>Мои результаты</h2>
+<div id="history"></div>
+<button onclick="loadResults()">Обновить историю</button>
+
 
 <!-- ========= FIREBASE + JS ========= -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, 
-           createUserWithEmailAndPassword,
-           signInWithEmailAndPassword,
-           onAuthStateChanged } 
-           from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, doc, setDoc } 
-           from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
-    authDomain: "engtestoge.firebaseapp.com",
-    projectId: "engtestoge"
+    apiKey: "ВСТАВЬ СВОЁ",
+    authDomain: "ВСТАВЬ СВОЁ",
+    projectId: "ВСТАВЬ СВОЁ"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const authStatus = document.getElementById("authStatus");
   let currentUser = null;
+  const authStatus = document.getElementById("authStatus");
 
+  // === Отслеживание состояния ===
   onAuthStateChanged(auth, (user) => {
     if (user) {
       currentUser = user;
       authStatus.innerText = "Вы вошли как: " + user.email;
+      loadResults();
     } else {
       currentUser = null;
       authStatus.innerText = "Вы не авторизованы";
+      document.getElementById("history").innerHTML = "";
     }
   });
 
+  // === Регистрация ===
   window.register = function () {
     const email = document.getElementById("email").value;
     const pass = document.getElementById("password").value;
@@ -117,6 +133,7 @@
       .catch(err => alert(err.message));
   };
 
+  // === Вход ===
   window.login = function () {
     const email = document.getElementById("email").value;
     const pass = document.getElementById("password").value;
@@ -126,10 +143,16 @@
       .catch(err => alert(err.message));
   };
 
+  // === Выход ===
+  window.logout = function () {
+    signOut(auth);
+  };
+
+  // === Проверка теста ===
   window.checkTest = async function () {
     const answers = { q1:'a', q2:'b', q3:'c', q4:'b' };
-
     let score = 0;
+
     for (let q of Object.keys(answers)) {
       const selected = document.querySelector(`input[name="${q}"]:checked`);
       if (selected && selected.value === answers[q]) score++;
@@ -137,17 +160,40 @@
 
     document.getElementById("result").innerText = `Ваш результат: ${score} / 4`;
 
-    if (currentUser) {
-      await setDoc(doc(db, "results", currentUser.uid), {
-        score: score,
-        date: new Date()
-      });
-      console.log("Результат сохранён");
-    } else {
-      alert("Чтобы сохранить результат — войдите или зарегистрируйтесь");
+    if (!currentUser) {
+      alert("Чтобы сохранить результат — войдите!");
+      return;
     }
+
+    // Сохраняем попытку
+    await addDoc(collection(db, "results", currentUser.uid, "attempts"), {
+      score: score,
+      date: new Date()
+    });
+
+    loadResults();
+  };
+
+  // === Загрузка истории ===
+  window.loadResults = async function () {
+    if (!currentUser) return;
+
+    const histBox = document.getElementById("history");
+    histBox.innerHTML = "Загрузка...";
+
+    const querySnap = await getDocs(collection(db, "results", currentUser.uid, "attempts"));
+
+    let html = "<ul>";
+    querySnap.forEach(doc => {
+      const data = doc.data();
+      html += `<li>${new Date(data.date.seconds * 1000).toLocaleString()} — ${data.score}/4</li>`;
+    });
+    html += "</ul>";
+
+    histBox.innerHTML = html;
   };
 </script>
+
 
 </body>
 </html>
