@@ -138,8 +138,8 @@ async function showFullStats(uid) {
   const chartData = [];
 
   for (let testId of testIds) {
-    const testDoc = doc(db, "results", uid, testId); // документ test
-    const attemptsCol = collection(testDoc, "attempts"); // подколлекция attempts
+    // Теперь testId — это коллекция внутри документа пользователя
+    const attemptsCol = collection(db, "results", uid, testId);
 
     let snapshot;
     try {
@@ -192,6 +192,7 @@ async function showFullStats(uid) {
   tableHTML += `<p><strong>Общий результат (сумма всех попыток): ${totalScore} / ${totalMaxScore}</strong></p>`;
   statsDiv.innerHTML = tableHTML;
 
+  // Построение графика
   if (chartData.length > 0) {
     chartCanvas.style.display = "block";
     new Chart(chartCanvas, {
@@ -219,6 +220,7 @@ async function showFullStats(uid) {
     chartCanvas.style.display = "none";
   }
 }
+
 </script>
 
 </body>
