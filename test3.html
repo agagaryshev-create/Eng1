@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Test 3: Holidays</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+h2 { margin-top: 20px; }
+.question { margin-bottom: 15px; }
+.btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
+input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
+#result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Test 3: Holidays</h1>
+
+<h2>Text 1</h2>
+<p>
+Many people enjoy spending their holidays in different ways. Some prefer travelling to new cities or countries, while others stay at home and relax. Emma likes visiting museums and historical sites. She always takes photos and writes a travel diary.
+</p>
+
+<!-- Задание 1: выбор правильного варианта -->
+<div class="question">
+1. What does Emma like to do on holidays?<br>
+<label><input type="radio" name="q1" value="a"> Stay at home</label><br>
+<label><input type="radio" name="q1" value="b"> Visit museums and historical sites</label><br>
+<label><input type="radio" name="q1" value="c"> Go shopping</label>
+</div>
+
+<!-- Задание 2: заполнение пропуска -->
+<div class="question">
+2. Emma always takes ___ and writes a travel diary.<br>
+<input type="text" name="q2" placeholder="ваш ответ">
+</div>
+
+<!-- Задание 3: соответствие (соединить с описанием) -->
+<h2>Text 2</h2>
+<p>Match the activity with the correct description:</p>
+<ul>
+<li>a) Swimming</li>
+<li>b) Hiking</li>
+<li>c) Reading</li>
+</ul>
+
+<div class="question">
+3a. Doing this in mountains or forests is called: <input type="text" name="q3a" placeholder="буква ответа">
+</div>
+<div class="question">
+3b. Doing this in water is called: <input type="text" name="q3b" placeholder="буква ответа">
+</div>
+<div class="question">
+3c. Doing this with books is called: <input type="text" name="q3c" placeholder="буква ответа">
+</div>
+
+<div class="btn" onclick="checkTest()">Проверить</div>
+<div id="result"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ====== Вставьте ваш Firebase конфиг ======
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+onAuthStateChanged(auth, user => { currentUser = user; });
+
+window.checkTest = async function() {
+  let score = 0;
+
+  // Задание 1
+  const ans1 = document.querySelector('input[name="q1"]:checked');
+  if(ans1 && ans1.value === 'b') score++;
+
+  // Задание 2
+  const ans2 = document.querySelector('input[name="q2"]').value.trim().toLowerCase();
+  if(ans2 === 'photos') score++;
+
+  // Задание 3
+  const ans3a = document.querySelector('input[name="q3a"]').value.trim().toLowerCase();
+  const ans3b = document.querySelector('input[name="q3b"]').value.trim().toLowerCase();
+  const ans3c = document.querySelector('input[name="q3c"]').value.trim().toLowerCase();
+  if(ans3a === 'b') score++;
+  if(ans3b === 'a') score++;
+  if(ans3c === 'c') score++;
+
+  document.getElementById("result").innerText = `Ваш результат: ${score} / 5`;
+
+  if(!currentUser) {
+    alert("Чтобы сохранить результат — войдите в систему!");
+    return;
+  }
+
+  await addDoc(collection(db, "results", currentUser.uid, "test3", "attempts"), {
+    score: score,
+    date: new Date()
+  });
+};
+</script>
+
+</body>
+</html>
