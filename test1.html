@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Test 1: Alice & Tom</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+    h2 { margin-top: 20px; }
+    .question { margin-bottom: 15px; }
+    .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
+    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Test 1: Alice & Tom</h1>
+
+<h2>Text 1</h2>
+<p>
+Alice lives in a small town near the mountains. Every morning she wakes up early to take the bus to school. She enjoys studying English and dreams of becoming a teacher. On weekends, Alice helps her parents in their family shop and reads adventure books.
+</p>
+
+<div class="question">
+1. Where does Alice live?<br>
+<label><input type="radio" name="q1" value="a"> In a small town</label><br>
+<label><input type="radio" name="q1" value="b"> In a big city</label><br>
+<label><input type="radio" name="q1" value="c"> Near the sea</label>
+</div>
+
+<div class="question">
+2. What does Alice want to become?<br>
+<label><input type="radio" name="q2" value="a"> A doctor</label><br>
+<label><input type="radio" name="q2" value="b"> A teacher</label><br>
+<label><input type="radio" name="q2" value="c"> A writer</label>
+</div>
+
+<div class="btn" onclick="checkTest()">Проверить</div>
+<div id="result"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // ====== Вставьте свой Firebase конфиг ======
+  const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let currentUser = null;
+  onAuthStateChanged(auth, user => { currentUser = user; });
+
+  window.checkTest = async function() {
+    const answers = {q1:'a', q2:'b'};
+    let score = 0;
+    for (let q of Object.keys(answers)) {
+      const selected = document.querySelector(`input[name="${q}"]:checked`);
+      if(selected && selected.value === answers[q]) score++;
+    }
+
+    document.getElementById("result").innerText = `Ваш результат: ${score} / ${Object.keys(answers).length}`;
+
+    if(!currentUser) { alert("Чтобы сохранить результат — войдите в систему!"); return; }
+
+    await addDoc(collection(db, "results", currentUser.uid, "test1", "attempts"), {
+      score: score,
+      date: new Date()
+    });
+  };
+</script>
+
+</body>
+</html>
