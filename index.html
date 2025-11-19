@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>English OGE Tests</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+    h1, h2 { text-align: center; }
+    #testMenu button { display: block; width: 100%; padding: 15px; margin: 10px 0; cursor: pointer; font-size: 16px; }
+    #authBox { border: 1px solid #aaa; padding: 15px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+<h1>English OGE Tests</h1>
+
+<!-- AUTH -->
+<div id="authBox">
+  <h3>Вход / Регистрация</h3>
+  Email: <br><input id="email" type="email"><br>
+  Password: <br><input id="password" type="password"><br><br>
+
+  <button onclick="register()">Регистрация</button>
+  <button onclick="login()">Войти</button>
+  <button onclick="logout()">Выйти</button>
+
+  <p id="authStatus"></p>
+</div>
+
+<!-- TEST MENU -->
+<div id="testMenu">
+  <h2>Выберите тест</h2>
+  <button onclick="openTest('test1.html')">Test 1: Alice & Tom</button>
+  <button onclick="openTest('test2.html')">Test 2: Sports</button>
+  <button onclick="openTest('test3.html')">Test 3: Holidays</button>
+  <button onclick="openTest('test4.html')">Test 4: Environment</button>
+  <button onclick="openTest('test5.html')">Test 5: Daily Life</button>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  let currentUser = null;
+  const authStatus = document.getElementById("authStatus");
+
+  onAuthStateChanged(auth, user => {
+    currentUser = user;
+    authStatus.innerText = user ? "Вы вошли как: " + user.email : "Вы не авторизованы";
+  });
+
+  window.register = () => {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+    createUserWithEmailAndPassword(auth, email, pass).catch(err => alert(err.message));
+  };
+
+  window.login = () => {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+    signInWithEmailAndPassword(auth, email, pass).catch(err => alert(err.message));
+  };
+
+  window.logout = () => signOut(auth);
+
+  window.openTest = file => {
+    if(!currentUser) { alert("Чтобы пройти тест — войдите в систему!"); return; }
+    window.open(file, "_blank");
+  };
+</script>
+</body>
+</html>
