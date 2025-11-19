@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>English OGE Tests</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+    h1, h2 { text-align: center; }
+    #testMenu button { display: block; width: 100%; padding: 15px; margin: 10px 0; cursor: pointer; font-size: 16px; }
+    #authBox { border: 1px solid #aaa; padding: 15px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>English OGE Tests</h1>
+
+  <!-- ========= AUTH BLOCK ========= -->
+  <div id="authBox">
+    <h3>Вход / Регистрация</h3>
+    Email: <br><input id="email" type="email"><br>
+    Password: <br><input id="password" type="password"><br><br>
+
+    <button onclick="register()">Регистрация</button>
+    <button onclick="login()">Войти</button>
+    <button onclick="logout()">Выйти</button>
+
+    <p id="authStatus"></p>
+  </div>
+
+  <!-- ========= TEST MENU ========= -->
+  <div id="testMenu">
+    <h2>Выберите тест</h2>
+    <button onclick="openTest('test1.html')">Test 1: Alice & Tom</button>
+    <button onclick="openTest('test2.html')">Test 2: Football</button>
+    <!-- Можно добавить новые тесты -->
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ====== Вставьте сюда свой конфиг Firebase ======
+    const firebaseConfig = {
+      apiKey: "ВСТАВЬ СВОЁ",
+      authDomain: "ВСТАВЬ СВОЁ",
+      projectId: "ВСТАВЬ СВОЁ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    const authStatus = document.getElementById("authStatus");
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        authStatus.innerText = "Вы вошли как: " + user.email;
+      } else {
+        currentUser = null;
+        authStatus.innerText = "Вы не авторизованы";
+      }
+    });
+
+    window.register = function () {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      createUserWithEmailAndPassword(auth, email, pass)
+        .then(() => authStatus.innerText = "Регистрация успешна!")
+        .catch(err => alert(err.message));
+    };
+
+    window.login = function () {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, pass)
+        .then(() => authStatus.innerText = "Вход выполнен!")
+        .catch(err => alert(err.message));
+    };
+
+    window.logout = function () {
+      signOut(auth);
+    };
+
+    // ========= Функция открытия теста =========
+    window.openTest = function(file) {
+      // Проверка авторизации
+      if(!currentUser) {
+        alert("Чтобы пройти тест — войдите в систему!");
+        return;
+      }
+      // Открываем тест в новой вкладке
+      window.open(file, "_blank");
+    };
+  </script>
+
+</body>
+</html>
