@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Test 5: Daily Life</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+h2 { margin-top: 20px; }
+.question { margin-bottom: 15px; }
+.btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
+input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
+#result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Test 5: Daily Life</h1>
+
+<h2>Text 1</h2>
+<p>
+John usually wakes up at 7 a.m. He eats breakfast, checks his emails, and goes to work by bus. After work, he likes to cook dinner and watch TV. On weekends, he visits his friends or goes to the park.
+</p>
+
+<!-- Вопрос 1: выбор ответа -->
+<div class="question">
+1. How does John go to work?<br>
+<label><input type="radio" name="q1" value="a"> By car</label><br>
+<label><input type="radio" name="q1" value="b"> By bus</label><br>
+<label><input type="radio" name="q1" value="c"> By bike</label>
+</div>
+
+<!-- Вопрос 2: заполнение пропуска -->
+<div class="question">
+2. After work, John likes to ___ dinner and watch TV.<br>
+<input type="text" name="q2" placeholder="ваш ответ">
+</div>
+
+<h2>Text 2</h2>
+<p>
+Match the activity to the correct day John does it most often:
+</p>
+<ul>
+<li>a) Visits friends</li>
+<li>b) Goes to work</li>
+<li>c) Goes to the park</li>
+</ul>
+
+<div class="question">
+3a. During weekdays: <input type="text" name="q3a" placeholder="буква ответа">
+</div>
+<div class="question">
+3b. On weekends (friend activity): <input type="text" name="q3b" placeholder="буква ответа">
+</div>
+<div class="question">
+3c. On weekends (park activity): <input type="text" name="q3c" placeholder="буква ответа">
+</div>
+
+<div class="btn" onclick="checkTest()">Проверить</div>
+<div id="result"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ====== Вставьте ваш Firebase конфиг ======
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+onAuthStateChanged(auth, user => { currentUser = user; });
+
+window.checkTest = async function() {
+  let score = 0;
+
+  // Вопрос 1
+  const ans1 = document.querySelector('input[name="q1"]:checked');
+  if(ans1 && ans1.value === 'b') score++;
+
+  // Вопрос 2
+  const ans2 = document.querySelector('input[name="q2"]').value.trim().toLowerCase();
+  if(ans2 === 'cook') score++;
+
+  // Вопрос 3
+  const ans3a = document.querySelector('input[name="q3a"]').value.trim().toLowerCase();
+  const ans3b = document.querySelector('input[name="q3b"]').value.trim().toLowerCase();
+  const ans3c = document.querySelector('input[name="q3c"]').value.trim().toLowerCase();
+  if(ans3a === 'b') score++;
+  if(ans3b === 'a') score++;
+  if(ans3c === 'c') score++;
+
+  document.getElementById("result").innerText = `Ваш результат: ${score} / 5`;
+
+  if(!currentUser) {
+    alert("Чтобы сохранить результат — войдите в систему!");
+    return;
+  }
+
+  await addDoc(collection(db, "results", currentUser.uid, "test5", "attempts"), {
+    score: score,
+    date: new Date()
+  });
+};
+</script>
+
+</body>
+</html>
