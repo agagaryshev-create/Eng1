@@ -131,7 +131,15 @@ async function showFullStats(uid) {
 
   for (let testId of testIds) {
     const attemptsCol = collection(db, "results", uid, testId, "attempts");
-    const snapshot = await getDocs(attemptsCol);
+    
+    let snapshot;
+    try {
+      snapshot = await getDocs(attemptsCol);
+    } catch (err) {
+      console.error("Ошибка при получении данных:", err);
+      tableHTML += `<p>Не удалось загрузить данные для ${testId}</p>`;
+      continue;
+    }
 
     let maxPoints = 0;
     switch(testId){
@@ -143,50 +151,71 @@ async function showFullStats(uid) {
     }
 
     tableHTML += `<h3>${testId}</h3>`;
+
     if(snapshot.empty){
       tableHTML += "<p>Нет попыток</p>";
       continue;
     }
 
     tableHTML += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
+    
     snapshot.forEach(doc => {
       const data = doc.data();
-      const date = data.date.toDate().toLocaleString();
-      tableHTML += `<tr><td>${date}</td><td>${data.score} / ${maxPoints}</td></tr>`;
-      chartLabels.push(`${testId} (${date.split(',')[0]})`);
-      chartData.push(data.score);
-      totalScore += data.score;
+
+      // Проверяем поле date
+      let dateStr = "неизвестно";
+      if (data.date) {
+        try {
+          dateStr = (data.date.toDate ? data.date.toDate() : new Date(data.date))
+                    .toLocaleString();
+        } catch(e) {
+          console.warn("Неверный формат даты:", data.date);
+        }
+      }
+
+      const score = data.score ?? 0; // на случай отсутствия score
+      tableHTML += `<tr><td>${dateStr}</td><td>${score} / ${maxPoints}</td></tr>`;
+      
+      chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
+      chartData.push(score);
+      totalScore += score;
       totalMaxScore += maxPoints;
     });
+
     tableHTML += "</table>";
   }
 
   tableHTML += `<p><strong>Общий результат (сумма всех попыток): ${totalScore} / ${totalMaxScore}</strong></p>`;
   statsDiv.innerHTML = tableHTML;
 
-  // Построение графика
-  new Chart(chartCanvas, {
-    type: 'line',
-    data: {
-      labels: chartLabels,
-      datasets: [{
-        label: 'Баллы',
-        data: chartData,
-        fill: false,
-        borderColor: 'blue',
-        tension: 0.2
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        title: { display: true, text: 'Прогресс пользователя' }
+  // Строим график только если есть данные
+  if (chartData.length > 0) {
+    new Chart(chartCanvas, {
+      type: 'line',
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          label: 'Баллы',
+          data: chartData,
+          fill: false,
+          borderColor: 'blue',
+          tension: 0.2
+        }]
       },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Прогресс пользователя' }
+        },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  } else {
+    chartCanvas.style.display = "none"; // скрываем график, если нет данных
+  }
 }
+
 </script>
 
 </body>
