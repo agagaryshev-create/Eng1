@@ -121,9 +121,19 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // Функция для вывода статистики и графика
+// глобальная переменная для хранения объекта Chart
+let scoreChartInstance = null;
+
 async function showFullStats(uid) {
   const attemptsCol = collection(db, "results", uid, "attempts");
-  const snapshot = await getDocs(attemptsCol);
+  let snapshot;
+  try {
+    snapshot = await getDocs(attemptsCol);
+  } catch (err) {
+    console.error("Ошибка при получении попыток:", err);
+    statsDiv.innerText = "Ошибка загрузки данных.";
+    return;
+  }
 
   if (snapshot.empty) {
     statsDiv.innerText = "Нет попыток";
@@ -131,14 +141,15 @@ async function showFullStats(uid) {
     return;
   }
 
-  let tableHTML = "<h2>История результатов</h2>";
-  const chartLabels = [];
-  const chartData = [];
-  let totalScore = 0;
-  let totalMaxScore = 0;
   const maxPointsByTest = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
   const testsData = {};
+  let totalScore = 0;
+  let totalMaxScore = 0;
 
+  const chartLabels = [];
+  const chartData = [];
+
+  // группируем по тестам
   snapshot.forEach(doc => {
     const data = doc.data();
     const testId = data.testId || "unknown";
@@ -155,6 +166,8 @@ async function showFullStats(uid) {
     chartData.push(score);
   });
 
+  // строим таблицу
+  let tableHTML = "<h2>История результатов</h2>";
   for (let testId in maxPointsByTest) {
     tableHTML += `<h3>${testId}</h3>`;
     if (!testsData[testId] || testsData[testId].length === 0) {
@@ -172,9 +185,16 @@ async function showFullStats(uid) {
   tableHTML += `<p><strong>Общий результат: ${totalScore} / ${totalMaxScore}</strong></p>`;
   statsDiv.innerHTML = tableHTML;
 
+  // строим график
   if (chartData.length > 0) {
     chartCanvas.style.display = "block";
-    new Chart(chartCanvas, {
+
+    // если график уже был, уничтожаем его
+    if (scoreChartInstance) {
+      scoreChartInstance.destroy();
+    }
+
+    scoreChartInstance = new Chart(chartCanvas, {
       type: 'line',
       data: {
         labels: chartLabels,
@@ -195,10 +215,12 @@ async function showFullStats(uid) {
         scales: { y: { beginAtZero: true } }
       }
     });
+
   } else {
     chartCanvas.style.display = "none";
   }
 }
+
 </script>
 
 </body>
