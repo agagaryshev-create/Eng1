@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>English OGE Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+    h2 { margin-top: 30px; }
+    .question { margin-bottom: 15px; }
+    .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
+    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+    #authBox { border: 1px solid #aaa; padding: 15px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>English Test (OGE style)</h1>
+
+  <!-- ========= AUTH BLOCK ========= -->
+  <div id="authBox">
+    <h3>Вход / Регистрация</h3>
+    Email: <br><input id="email" type="email"><br>
+    Password: <br><input id="password" type="password"><br><br>
+
+    <button onclick="register()">Регистрация</button>
+    <button onclick="login()">Войти</button>
+
+    <p id="authStatus"></p>
+  </div>
+
+  <!-- ========= TEST ========= -->
+  <h2>Text 1</h2>
+  <p>
+    Alice lives in a small town near the mountains...
+  </p>
+
+  <div class="question">
+    1. Where does Alice live?<br>
+    <label><input type="radio" name="q1" value="a"> In a small town</label><br>
+    <label><input type="radio" name="q1" value="b"> In a big city</label><br>
+    <label><input type="radio" name="q1" value="c"> Near the sea</label>
+  </div>
+
+  <div class="question">
+    2. What does Alice want to become?<br>
+    <label><input type="radio" name="q2" value="a"> A doctor</label><br>
+    <label><input type="radio" name="q2" value="b"> A teacher</label><br>
+    <label><input type="radio" name="q2" value="c"> A writer</label>
+  </div>
+
+  <h2>Text 2</h2>
+  <p>
+    Tom likes sports...
+  </p>
+
+  <div class="question">
+    3. What sport does Tom play?<br>
+    <label><input type="radio" name="q3" value="a"> Tennis</label><br>
+    <label><input type="radio" name="q3" value="b"> Basketball</label><br>
+    <label><input type="radio" name="q3" value="c"> Football</label>
+  </div>
+
+  <div class="question">
+    4. Why does Tom train hard?<br>
+    <label><input type="radio" name="q4" value="a"> To join a new club</label><br>
+    <label><input type="radio" name="q4" value="b"> To win a tournament</label><br>
+    <label><input type="radio" name="q4" value="c"> To impress his friends</label>
+  </div>
+
+  <div class="btn" onclick="checkTest()">Проверить</div>
+
+  <div id="result"></div>
+
+<!-- ========= FIREBASE + JS ========= -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, 
+           createUserWithEmailAndPassword,
+           signInWithEmailAndPassword,
+           onAuthStateChanged } 
+           from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc } 
+           from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+    authDomain: "engtestoge.firebaseapp.com",
+    projectId: "engtestoge"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const authStatus = document.getElementById("authStatus");
+  let currentUser = null;
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser = user;
+      authStatus.innerText = "Вы вошли как: " + user.email;
+    } else {
+      currentUser = null;
+      authStatus.innerText = "Вы не авторизованы";
+    }
+  });
+
+  window.register = function () {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+
+    createUserWithEmailAndPassword(auth, email, pass)
+      .then(() => authStatus.innerText = "Регистрация успешна!")
+      .catch(err => alert(err.message));
+  };
+
+  window.login = function () {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+
+    signInWithEmailAndPassword(auth, email, pass)
+      .then(() => authStatus.innerText = "Вход выполнен!")
+      .catch(err => alert(err.message));
+  };
+
+  window.checkTest = async function () {
+    const answers = { q1:'a', q2:'b', q3:'c', q4:'b' };
+
+    let score = 0;
+    for (let q of Object.keys(answers)) {
+      const selected = document.querySelector(`input[name="${q}"]:checked`);
+      if (selected && selected.value === answers[q]) score++;
+    }
+
+    document.getElementById("result").innerText = `Ваш результат: ${score} / 4`;
+
+    if (currentUser) {
+      await setDoc(doc(db, "results", currentUser.uid), {
+        score: score,
+        date: new Date()
+      });
+      console.log("Результат сохранён");
+    } else {
+      alert("Чтобы сохранить результат — войдите или зарегистрируйтесь");
+    }
+  };
+</script>
+
+</body>
+</html>
