@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>English OGE Tests – Статистика</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; line-height: 1.6; }
+h1 { text-align: center; }
+.menu { margin-top: 30px; }
+.menu a { display: block; padding: 10px; margin-bottom: 10px; border: 1px solid #333; text-decoration: none; color: black; width: 250px; }
+#stats, #charts { margin-top: 30px; }
+table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>English OGE Tests</h1>
+
+<div id="user-info"></div>
+
+<div class="menu">
+  <a href="test1.html" target="_blank">Test 1: Alice & Tom</a>
+  <a href="test2.html" target="_blank">Test 2: Sports</a>
+  <a href="test3.html" target="_blank">Test 3: Holidays</a>
+  <a href="test4.html" target="_blank">Test 4: Environment</a>
+  <a href="test5.html" target="_blank">Test 5: Daily Life</a>
+</div>
+
+<div id="stats">Загрузка статистики...</div>
+<canvas id="scoreChart" style="max-width: 800px; margin-top: 30px;"></canvas>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ====== Firebase конфиг ======
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const userInfoDiv = document.getElementById("user-info");
+const statsDiv = document.getElementById("stats");
+const chartCanvas = document.getElementById("scoreChart");
+
+const provider = new GoogleAuthProvider();
+
+function login() { signInWithPopup(auth, provider).catch(err => alert("Ошибка авторизации: " + err)); }
+function logout() { auth.signOut(); }
+
+onAuthStateChanged(auth, async user => {
+  if(user){
+    userInfoDiv.innerHTML = `Привет, ${user.displayName} (<a href="#" onclick="logout()">Выйти</a>)`;
+    await showFullStats(user.uid);
+  } else {
+    userInfoDiv.innerHTML = `<button onclick="login()">Войти через Google</button>`;
+    statsDiv.innerText = "Войдите, чтобы увидеть статистику.";
+  }
+});
+
+async function showFullStats(uid){
+  const testIds = ["test1","test2","test3","test4","test5"];
+  let totalMaxScore = 0;
+  let totalScore = 0;
+  let tableHTML = "<h2>История результатов</h2>";
+
+  const chartLabels = [];
+  const chartData = [];
+
+  for(let testId of testIds){
+    const attemptsCol = collection(db, "results", uid, testId, "attempts");
+    const snapshot = await getDocs(attemptsCol);
+
+    let maxPoints = 0;
+    switch(testId){
+      case "test1": maxPoints = 3; break;
+      case "test2": maxPoints = 3; break;
+      case "test3": maxPoints = 5; break;
+      case "test4": maxPoints = 3; break;
+      case "test5": maxPoints = 5; break;
+    }
+
+    tableHTML += `<h3>${testId}</h3>`;
+
+    if(snapshot.empty){
+      tableHTML += `<p>Нет попыток</p>`;
+      continue;
+    }
+
+    tableHTML += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const date = data.date.toDate().toLocaleString();
+      tableHTML += `<tr><td>${date}</td><td>${data.score} / ${maxPoints}</td></tr>`;
+      chartLabels.push(`${testId} (${date.split(',')[0]})`);
+      chartData.push(data.score);
+      totalScore += data.score;
+      totalMaxScore += maxPoints;
+    });
+    tableHTML += `</table>`;
+  }
+
+  tableHTML += `<p><strong>Общий результат (сумма всех попыток): ${totalScore} / ${totalMaxScore}</strong></p>`;
+  statsDiv.innerHTML = tableHTML;
+
+  // Построение графика прогресса
+  new Chart(chartCanvas, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: 'Баллы',
+        data: chartData,
+        fill: false,
+        borderColor: 'blue',
+        tension: 0.2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Прогресс пользователя' }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+</script>
+
+</body>
+</html>
