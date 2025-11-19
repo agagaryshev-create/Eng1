@@ -1,49 +1,7 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>English OGE Tests – Статистика</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; line-height: 1.6; }
-h1 { text-align: center; }
-.menu { margin-top: 30px; }
-.menu a { display: block; padding: 10px; margin-bottom: 10px; border: 1px solid #333; text-decoration: none; color: black; width: 250px; }
-#stats, #charts { margin-top: 30px; }
-table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-th, td { border: 1px solid #333; padding: 8px; text-align: center; }
-input, button { padding: 5px; margin: 5px 0; }
-</style>
-</head>
-<body>
-
-<h1>English OGE Tests</h1>
-
-<div id="auth">
-  <h3>Авторизация</h3>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Пароль"><br>
-  <button id="register-btn">Зарегистрироваться</button>
-  <button id="login-btn">Войти</button>
-  <button id="logout-btn" style="display:none;">Выйти</button>
-  <div id="auth-msg"></div>
-</div>
-
-<div class="menu">
-  <a href="test1.html" target="_blank">Test 1: Alice & Tom</a>
-  <a href="test2.html" target="_blank">Test 2: Sports</a>
-  <a href="test3.html" target="_blank">Test 3: Holidays</a>
-  <a href="test4.html" target="_blank">Test 4: Environment</a>
-  <a href="test5.html" target="_blank">Test 5: Daily Life</a>
-</div>
-
-<div id="stats">Войдите, чтобы увидеть статистику.</div>
-<canvas id="scoreChart" style="max-width: 800px; margin-top: 30px;"></canvas>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ====== Firebase конфиг ======
 const firebaseConfig = {
@@ -56,7 +14,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Элементы
+// Глобальные переменные для консоли (опционально)
+window.auth = auth;
+window.db = db;
+
+// Элементы страницы
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const registerBtn = document.getElementById("register-btn");
@@ -66,40 +28,27 @@ const authMsg = document.getElementById("auth-msg");
 const statsDiv = document.getElementById("stats");
 const chartCanvas = document.getElementById("scoreChart");
 
-// Регистрация
+// ===== Регистрация, вход, выход =====
 registerBtn.addEventListener("click", async () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
     authMsg.innerText = "Регистрация успешна!";
-  } catch (err) {
-    authMsg.innerText = "Ошибка: " + err.message;
-  }
+  } catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
 });
 
-// Вход
 loginBtn.addEventListener("click", async () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
     authMsg.innerText = "Вход выполнен!";
-  } catch (err) {
-    authMsg.innerText = "Ошибка: " + err.message;
-  }
+  } catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
 });
 
-// Выход
 logoutBtn.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-  } catch (err) {
-    alert("Ошибка выхода: " + err.message);
-  }
+  try { await signOut(auth); } 
+  catch (err) { alert("Ошибка выхода: " + err.message); }
 });
 
-// Отслеживаем состояние авторизации
+// ===== Отслеживаем авторизацию =====
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     emailInput.style.display = "none";
@@ -108,13 +57,8 @@ onAuthStateChanged(auth, async (user) => {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline";
     authMsg.innerText = "Вы вошли как: " + user.email;
-    statsDiv.innerText = "Загружаем статистику...";
-    try {
-      await showFullStats(user.uid);
-    } catch (err) {
-      console.error("Ошибка showFullStats:", err);
-      statsDiv.innerText = "Ошибка при загрузке статистики.";
-    }
+
+    await showFullStats(user.uid); // вызываем рабочую функцию
   } else {
     emailInput.style.display = "inline";
     passwordInput.style.display = "inline";
@@ -122,13 +66,12 @@ onAuthStateChanged(auth, async (user) => {
     loginBtn.style.display = "inline";
     logoutBtn.style.display = "none";
     statsDiv.innerText = "Войдите, чтобы увидеть статистику.";
+    chartCanvas.style.display = "none";
   }
 });
 
-// Функция для вывода полной статистики и графика
+// ===== Рабочая функция showFullStats =====
 async function showFullStats(uid) {
-  console.log("showFullStats вызвана для UID:", uid);
-
   const testIds = ["test1","test2","test3","test4","test5"];
   let totalMaxScore = 0;
   let totalScore = 0;
@@ -138,15 +81,15 @@ async function showFullStats(uid) {
   const chartData = [];
 
   for (let testId of testIds) {
-    // Теперь testId — это коллекция внутри документа пользователя
-    const attemptsCol = collection(db, "results", uid, testId);
+    // Путь к документу пользователя + тест
+    const testDocRef = doc(db, "results", uid, testId);
+    const attemptsCol = collection(testDocRef, "attempts"); // подколлекция "attempts"
 
     let snapshot;
     try {
       snapshot = await getDocs(attemptsCol);
-      console.log(`Документы для ${testId}:`, snapshot.docs.map(d => d.data()));
     } catch (err) {
-      console.error("Ошибка получения данных:", err);
+      console.error(`Ошибка получения данных для ${testId}:`, err);
       tableHTML += `<p>Не удалось загрузить данные для ${testId}</p>`;
       continue;
     }
@@ -176,12 +119,14 @@ async function showFullStats(uid) {
         try {
           const dateObj = data.date.toDate ? data.date.toDate() : new Date(data.date);
           dateStr = dateObj.toLocaleString();
-        } catch {}
+        } catch (e) { console.warn("Неверный формат даты:", data.date); }
       }
       const score = data.score ?? 0;
       tableHTML += `<tr><td>${dateStr}</td><td>${score} / ${maxPoints}</td></tr>`;
+
       chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
       chartData.push(score);
+
       totalScore += score;
       totalMaxScore += maxPoints;
     });
@@ -192,7 +137,7 @@ async function showFullStats(uid) {
   tableHTML += `<p><strong>Общий результат (сумма всех попыток): ${totalScore} / ${totalMaxScore}</strong></p>`;
   statsDiv.innerHTML = tableHTML;
 
-  // Построение графика
+  // Строим график
   if (chartData.length > 0) {
     chartCanvas.style.display = "block";
     new Chart(chartCanvas, {
@@ -220,8 +165,4 @@ async function showFullStats(uid) {
     chartCanvas.style.display = "none";
   }
 }
-
 </script>
-
-</body>
-</html>
