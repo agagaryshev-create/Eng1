@@ -1,24 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>English OGE Tests – Статистика</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; line-height: 1.6; }
+h1 { text-align: center; }
+.menu { margin-top: 30px; }
+.menu a { display: block; padding: 10px; margin-bottom: 10px; border: 1px solid #333; text-decoration: none; color: black; width: 250px; }
+#stats, #charts { margin-top: 30px; }
+table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+input, button { padding: 5px; margin: 5px 0; }
+</style>
+</head>
+<body>
+
+<h1>English OGE Tests</h1>
+
+<div id="auth">
+  <h3>Авторизация</h3>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Пароль"><br>
+  <button id="register-btn">Зарегистрироваться</button>
+  <button id="login-btn">Войти</button>
+  <button id="logout-btn" style="display:none;">Выйти</button>
+  <div id="auth-msg"></div>
+</div>
+
+<div class="menu">
+  <a href="test1.html" target="_blank">Test 1: Alice & Tom</a>
+  <a href="test2.html" target="_blank">Test 2: Sports</a>
+  <a href="test3.html" target="_blank">Test 3: Holidays</a>
+  <a href="test4.html" target="_blank">Test 4: Environment</a>
+  <a href="test5.html" target="_blank">Test 5: Daily Life</a>
+</div>
+
+<div id="stats">Войдите, чтобы увидеть статистику.</div>
+<canvas id="scoreChart" style="max-width: 800px; margin-top: 30px;"></canvas>
+
+<!-- Скрипт переносим сюда, перед закрывающим </body> -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ====== Firebase конфиг ======
+// ===== Firebase =====
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
   projectId: "engtestoge"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Глобальные переменные для консоли (опционально)
+// Глобально для консоли (опционально)
 window.auth = auth;
 window.db = db;
 
-// Элементы страницы
+// Элементы
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const registerBtn = document.getElementById("register-btn");
@@ -28,7 +70,7 @@ const authMsg = document.getElementById("auth-msg");
 const statsDiv = document.getElementById("stats");
 const chartCanvas = document.getElementById("scoreChart");
 
-// ===== Регистрация, вход, выход =====
+// ===== Регистрация =====
 registerBtn.addEventListener("click", async () => {
   try {
     await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
@@ -36,6 +78,7 @@ registerBtn.addEventListener("click", async () => {
   } catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
 });
 
+// ===== Вход =====
 loginBtn.addEventListener("click", async () => {
   try {
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
@@ -43,12 +86,13 @@ loginBtn.addEventListener("click", async () => {
   } catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
 });
 
+// ===== Выход =====
 logoutBtn.addEventListener("click", async () => {
   try { await signOut(auth); } 
   catch (err) { alert("Ошибка выхода: " + err.message); }
 });
 
-// ===== Отслеживаем авторизацию =====
+// ===== Отслеживание авторизации =====
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     emailInput.style.display = "none";
@@ -57,8 +101,7 @@ onAuthStateChanged(auth, async (user) => {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline";
     authMsg.innerText = "Вы вошли как: " + user.email;
-
-    await showFullStats(user.uid); // вызываем рабочую функцию
+    await showFullStats(user.uid);
   } else {
     emailInput.style.display = "inline";
     passwordInput.style.display = "inline";
@@ -76,20 +119,18 @@ async function showFullStats(uid) {
   let totalMaxScore = 0;
   let totalScore = 0;
   let tableHTML = "<h2>История результатов</h2>";
-
   const chartLabels = [];
   const chartData = [];
 
   for (let testId of testIds) {
-    // Путь к документу пользователя + тест
     const testDocRef = doc(db, "results", uid, testId);
-    const attemptsCol = collection(testDocRef, "attempts"); // подколлекция "attempts"
+    const attemptsCol = collection(testDocRef, "attempts");
 
     let snapshot;
     try {
       snapshot = await getDocs(attemptsCol);
     } catch (err) {
-      console.error(`Ошибка получения данных для ${testId}:`, err);
+      console.error(`Ошибка для ${testId}:`, err);
       tableHTML += `<p>Не удалось загрузить данные для ${testId}</p>`;
       continue;
     }
@@ -104,65 +145,39 @@ async function showFullStats(uid) {
     }
 
     tableHTML += `<h3>${testId}</h3>`;
-
-    if (snapshot.empty) {
-      tableHTML += "<p>Нет попыток</p>";
-      continue;
-    }
+    if (snapshot.empty) { tableHTML += "<p>Нет попыток</p>"; continue; }
 
     tableHTML += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
-
     snapshot.forEach(doc => {
       const data = doc.data();
       let dateStr = "неизвестно";
       if (data.date) {
-        try {
-          const dateObj = data.date.toDate ? data.date.toDate() : new Date(data.date);
-          dateStr = dateObj.toLocaleString();
-        } catch (e) { console.warn("Неверный формат даты:", data.date); }
+        try { dateStr = data.date.toDate ? data.date.toDate().toLocaleString() : new Date(data.date).toLocaleString(); }
+        catch (e) { console.warn("Неверный формат даты:", data.date); }
       }
       const score = data.score ?? 0;
       tableHTML += `<tr><td>${dateStr}</td><td>${score} / ${maxPoints}</td></tr>`;
-
       chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
       chartData.push(score);
-
       totalScore += score;
       totalMaxScore += maxPoints;
     });
-
     tableHTML += "</table>";
   }
 
   tableHTML += `<p><strong>Общий результат (сумма всех попыток): ${totalScore} / ${totalMaxScore}</strong></p>`;
   statsDiv.innerHTML = tableHTML;
 
-  // Строим график
   if (chartData.length > 0) {
     chartCanvas.style.display = "block";
     new Chart(chartCanvas, {
       type: 'line',
-      data: {
-        labels: chartLabels,
-        datasets: [{
-          label: 'Баллы',
-          data: chartData,
-          fill: false,
-          borderColor: 'blue',
-          tension: 0.2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Прогресс пользователя' }
-        },
-        scales: { y: { beginAtZero: true } }
-      }
+      data: { labels: chartLabels, datasets: [{ label: 'Баллы', data: chartData, fill: false, borderColor: 'blue', tension: 0.2 }] },
+      options: { responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Прогресс пользователя' } }, scales: { y: { beginAtZero: true } } }
     });
-  } else {
-    chartCanvas.style.display = "none";
-  }
+  } else { chartCanvas.style.display = "none"; }
 }
 </script>
+
+</body>
+</html>
