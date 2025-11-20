@@ -10,6 +10,7 @@ h2 { margin-top: 20px; }
 .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
 input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
 #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+#back-btn { margin-top: 30px; padding: 8px 12px; cursor: pointer; border: 1px solid #333; background-color: #f0f0f0; }
 </style>
 </head>
 <body>
@@ -21,7 +22,6 @@ input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
 Many people enjoy spending their holidays in different ways. Some prefer travelling to new cities or countries, while others stay at home and relax. Emma likes visiting museums and historical sites. She always takes photos and writes a travel diary.
 </p>
 
-<!-- Задание 1: выбор правильного варианта -->
 <div class="question">
 1. What does Emma like to do on holidays?<br>
 <label><input type="radio" name="q1" value="a"> Stay at home</label><br>
@@ -29,13 +29,11 @@ Many people enjoy spending their holidays in different ways. Some prefer travell
 <label><input type="radio" name="q1" value="c"> Go shopping</label>
 </div>
 
-<!-- Задание 2: заполнение пропуска -->
 <div class="question">
 2. Emma always takes ___ and writes a travel diary.<br>
 <input type="text" name="q2" placeholder="ваш ответ">
 </div>
 
-<!-- Задание 3: соответствие (соединить с описанием) -->
 <h2>Text 2</h2>
 <p>Match the activity with the correct description:</p>
 <ul>
@@ -57,12 +55,14 @@ Many people enjoy spending their holidays in different ways. Some prefer travell
 <div class="btn" onclick="checkTest()">Проверить</div>
 <div id="result"></div>
 
+<!-- Кнопка возврата -->
+<button id="back-btn">← Вернуться на главную</button>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ====== Вставьте ваш Firebase конфиг ======
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -102,11 +102,25 @@ window.checkTest = async function() {
     return;
   }
 
-  await addDoc(collection(db, "results", currentUser.uid, "test3", "attempts"), {
+  // 🔥 Путь к коллекции для test3_attempts
+  const colRef = collection(db, "results", currentUser.uid, "test3_attempts");
+
+  await addDoc(colRef, {
     score: score,
     date: new Date()
   });
 };
+
+// --- Кнопка возврата ---
+const backBtn = document.getElementById("back-btn");
+backBtn.addEventListener("click", () => {
+  if (window.opener) {
+    window.opener.location.reload();
+    window.close();
+  } else {
+    window.location.href = "index.html";
+  }
+});
 </script>
 
 </body>
