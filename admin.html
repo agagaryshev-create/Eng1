@@ -69,24 +69,22 @@ loadBtn.addEventListener("click", async () => {
 
       let userRow = { email, uid, totalScore: 0, totalMax: 0, tests: {} };
 
+      // Перебираем тесты
       for (let testId of testIds) {
         const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
         const attemptsSnapshot = await getDocs(attemptsCol);
 
-        let lastScore = 0;
+        let lastScore = 0; // по умолчанию 0, если попыток нет
         if (!attemptsSnapshot.empty) {
-          const attemptsArray = attemptsSnapshot.docs.map(d => {
-            const data = d.data();
-            return {
-              score: data.score ?? 0,
-              date: data.date?.toDate ? data.date.toDate() : new Date(0)
-            };
-          });
+          const attemptsArray = attemptsSnapshot.docs.map(d => ({
+            score: d.data().score ?? 0,
+            date: d.data().date?.toDate ? d.data().date.toDate() : new Date(0)
+          }));
           attemptsArray.sort((a,b) => a.date - b.date);
           lastScore = attemptsArray[attemptsArray.length-1].score;
         }
 
-        userRow.tests[testId] = lastScore; 
+        userRow.tests[testId] = lastScore;
         userRow.totalScore += lastScore;
         userRow.totalMax += maxPointsByTest[testId];
       }
