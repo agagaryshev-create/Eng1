@@ -9,6 +9,7 @@ h2 { margin-top: 20px; }
 .question { margin-bottom: 15px; }
 .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
 #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+#back-btn { margin-top: 30px; padding: 8px 12px; cursor: pointer; border: 1px solid #333; background-color: #f0f0f0; }
 </style>
 </head>
 <body>
@@ -45,6 +46,9 @@ On weekends, she helps her parents and reads adventure books.
 <div class="btn" onclick="checkTest()">Проверить</div>
 <div id="result"></div>
 
+<!-- Кнопка возврата -->
+<button id="back-btn">← Вернуться на главную</button>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -80,7 +84,7 @@ window.checkTest = async function() {
     return;
   }
 
-  // 🔥 Исправленный путь
+  // 🔥 Путь к коллекции для test1_attempts
   const colRef = collection(db, "results", currentUser.uid, "test1_attempts");
 
   await addDoc(colRef, {
@@ -89,6 +93,19 @@ window.checkTest = async function() {
   });
 
 };
+
+// --- Кнопка возврата ---
+const backBtn = document.getElementById("back-btn");
+backBtn.addEventListener("click", () => {
+  if (window.opener) {
+    // если test1 открыт в новой вкладке
+    window.opener.location.reload(); // обновляем index.html
+    window.close(); // закрываем текущую вкладку
+  } else {
+    // если открыт в той же вкладке
+    window.location.href = "index.html";
+  }
+});
 </script>
 
 </body>
