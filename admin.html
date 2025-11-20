@@ -67,7 +67,7 @@ loadBtn.addEventListener("click", async () => {
         email = userInfoDoc.data().email || uid;
       }
 
-      let userRow = { email, uid, total: 0, tests: {} };
+      let userRow = { email, uid, totalScore: 0, totalMax: 0, tests: {} };
 
       for (let testId of testIds) {
         const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
@@ -86,15 +86,16 @@ loadBtn.addEventListener("click", async () => {
           lastScore = attemptsArray[attemptsArray.length-1].score;
         }
 
-        userRow.tests[testId] = lastScore; // даже если lastScore = 0
-        userRow.total += lastScore;
+        userRow.tests[testId] = lastScore; 
+        userRow.totalScore += lastScore;
+        userRow.totalMax += maxPointsByTest[testId];
       }
 
       usersData.push(userRow);
     }
 
     // Сортируем по Total по убыванию
-    usersData.sort((a,b) => b.total - a.total);
+    usersData.sort((a,b) => b.totalScore - a.totalScore);
 
     // --- Построение таблицы ---
     let html = "<table><tr><th>Email / UID</th>";
@@ -110,7 +111,7 @@ loadBtn.addEventListener("click", async () => {
         const cls = perc >= 80 ? 'high' : (perc <= 50 ? 'low' : '');
         html += `<td class="${cls}">${score} / ${max}</td>`;
       });
-      html += `<td>${user.total}</td></tr>`;
+      html += `<td>${user.totalScore} / ${user.totalMax}</td></tr>`;
     });
 
     html += "</table>";
