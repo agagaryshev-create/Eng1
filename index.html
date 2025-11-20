@@ -122,77 +122,77 @@ onAuthStateChanged(auth, async (user) => {
 
 // Функция для вывода статистики и графика
 // глобальная переменная для хранения объекта Chart
-let scoreChartInstance = null;
-
 async function showFullStats(uid) {
-  const attemptsCol = collection(db, "results", uid, "attempts");
-  let snapshot;
-  try {
-    snapshot = await getDocs(attemptsCol);
-  } catch (err) {
-    console.error("Ошибка при получении попыток:", err);
-    statsDiv.innerText = "Ошибка загрузки данных.";
-    return;
-  }
+  const testsCol = collection(db, "results", uid, "tests");
+  const testsSnapshot = await getDocs(testsCol);
 
-  if (snapshot.empty) {
-    statsDiv.innerText = "Нет попыток";
+  if (testsSnapshot.empty) {
+    statsDiv.innerText = "Нет результатов.";
     chartCanvas.style.display = "none";
     return;
   }
 
   const maxPointsByTest = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
   const testsData = {};
-  let totalScore = 0;
-  let totalMaxScore = 0;
 
   const chartLabels = [];
   const chartData = [];
 
-  // группируем по тестам
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const testId = data.testId || "unknown";
-    const score = data.score ?? 0;
-    const dateStr = data.date?.toDate ? data.date.toDate().toLocaleString() : "неизвестно";
+  let totalScore = 0;
+  let totalMaxScore = 0;
 
-    if (!testsData[testId]) testsData[testId] = [];
-    testsData[testId].push({ dateStr, score });
+  // --- Идём по тестам ---
+  for (let testDoc of testsSnapshot.docs) {
+    const testId = testDoc.id;
 
-    totalScore += score;
-    totalMaxScore += maxPointsByTest[testId] ?? 0;
+    const attemptsCol = collection(db, "results", uid, "tests", testId, "attempts");
+    const attemptsSnapshot = await getDocs(attemptsCol);
 
-    chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
-    chartData.push(score);
-  });
+    if (attemptsSnapshot.empty) continue;
 
-  // строим таблицу
-  let tableHTML = "<h2>История результатов</h2>";
+    testsData[testId] = [];
+
+    attemptsSnapshot.forEach(doc => {
+      const data = doc.data();
+      const score = data.score ?? 0;
+      const dateStr = data.date?.toDate ? data.date.toDate().toLocaleString() : "неизвестно";
+
+      testsData[testId].push({ score, dateStr });
+
+      totalScore += score;
+      totalMaxScore += maxPointsByTest[testId] ?? 0;
+
+      chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
+      chartData.push(score);
+    });
+  }
+
+  // --- Таблица ---
+  let html = "<h2>История результатов</h2>";
+
   for (let testId in maxPointsByTest) {
-    tableHTML += `<h3>${testId}</h3>`;
-    if (!testsData[testId] || testsData[testId].length === 0) {
-      tableHTML += "<p>Нет попыток</p>";
+    html += `<h3>${testId}</h3>`;
+
+    if (!testsData[testId]) {
+      html += "<p>Нет попыток</p>";
       continue;
     }
 
-    tableHTML += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
-    testsData[testId].forEach(item => {
-      tableHTML += `<tr><td>${item.dateStr}</td><td>${item.score} / ${maxPointsByTest[testId]}</td></tr>`;
+    html += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
+    testsData[testId].forEach(a => {
+      html += `<tr><td>${a.dateStr}</td><td>${a.score} / ${maxPointsByTest[testId]}</td></tr>`;
     });
-    tableHTML += "</table>";
+    html += "</table>";
   }
 
-  tableHTML += `<p><strong>Общий результат: ${totalScore} / ${totalMaxScore}</strong></p>`;
-  statsDiv.innerHTML = tableHTML;
+  html += `<p><strong>Общий результат: ${totalScore} / ${totalMaxScore}</strong></p>`;
+  statsDiv.innerHTML = html;
 
-  // строим график
+  // --- График ---
   if (chartData.length > 0) {
     chartCanvas.style.display = "block";
 
-    // если график уже был, уничтожаем его
-    if (scoreChartInstance) {
-      scoreChartInstance.destroy();
-    }
+    if (scoreChartInstance) scoreChartInstance.destroy();
 
     scoreChartInstance = new Chart(chartCanvas, {
       type: 'line',
@@ -206,20 +206,14 @@ async function showFullStats(uid) {
           tension: 0.2
         }]
       },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Прогресс пользователя' }
-        },
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive: true }
     });
 
   } else {
     chartCanvas.style.display = "none";
   }
 }
+
 
 </script>
 
