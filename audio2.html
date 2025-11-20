@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Аудирование — Тест с Common Voice</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 20px auto; }
+    button { padding: 8px 12px; }
+    #result { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Тест на аудирование</h1>
+
+<p>Прослушайте аудио и выберите правильный ответ:</p>
+
+<audio id="audio" controls>
+  <source src="https://commonvoice.mozilla.org/path/to/your/audio.mp3" type="audio/mpeg">
+  Ваш браузер не поддерживает аудио.
+</audio>
+
+<form id="quizForm">
+  <p>Что было сказано?</p>
+  <input type="radio" name="answer" value="a" id="a"><label for="a">“Hello, how are you?”</label><br>
+  <input type="radio" name="answer" value="b" id="b"><label for="b">“Good morning, see you later.”</label><br>
+  <input type="radio" name="answer" value="c" id="c"><label for="c">“What time is it?”</label><br>
+  <button type="submit">Проверить</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+  const correct = "a";
+  document.getElementById("quizForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const sel = document.querySelector('input[name="answer"]:checked');
+    if (!sel) {
+      document.getElementById("result").innerText = "Выберите вариант!";
+      return;
+    }
+    if (sel.value === correct) {
+      document.getElementById("result").innerText = "✅ Правильно!";
+      document.getElementById("result").style.color = "green";
+    } else {
+      document.getElementById("result").innerText = "❌ Неправильно!";
+      document.getElementById("result").style.color = "red";
+    }
+  });
+</script>
+
+</body>
+</html>
