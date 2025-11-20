@@ -115,13 +115,6 @@ async function logVisit() {
 // Вызываем при загрузке страницы
 logVisit();
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-
-
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 // ----------------------
 // Функция логирования посещения
