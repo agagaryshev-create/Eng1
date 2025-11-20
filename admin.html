@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Admin – Сводная статистика</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; line-height: 1.6; }
+h1 { text-align: center; }
+button { padding: 10px 20px; margin: 10px 0; }
+table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Админская сводная статистика</h1>
+
+<button id="loadStatsBtn">Получить статистику</button>
+
+<div id="statsDiv"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ====== Firebase конфиг ======
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const statsDiv = document.getElementById("statsDiv");
+const loadBtn = document.getElementById("loadStatsBtn");
+
+// Список тестов и их макс. баллы
+const testIds = ["test1","test2","test3","test4","test5"];
+const maxPointsByTest = { test1:3, test2:3, test3:5, test4:3, test5:5 };
+
+// Обработчик кнопки
+loadBtn.addEventListener("click", async () => {
+  statsDiv.innerHTML = "Загрузка…";
+  
+  try {
+    // Получаем всех пользователей Firestore (допустим, есть коллекция results с документами uid)
+    const resultsCol = collection(db, "results");
+    const usersSnapshot = await getDocs(resultsCol);
+
+    if (usersSnapshot.empty) {
+      statsDiv.innerHTML = "Нет пользователей.";
+      return;
+    }
+
+    let html = "<table><tr><th>Email / UID</th>";
+    testIds.forEach(t => html += `<th>${t}</th>`);
+    html += "<th>Total</th></tr>";
+
+    for (let userDoc of usersSnapshot.docs) {
+      const uid = userDoc.id;
+      let total = 0;
+      html += `<tr><td>${uid}</td>`;
+
+      for (let testId of testIds) {
+        const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
+        const attemptsSnapshot = await getDocs(attemptsCol);
+
+        let lastScore = "-";
+        if (!attemptsSnapshot.empty) {
+          const attemptsArray = attemptsSnapshot.docs.map(doc => doc.data());
+          const lastAttempt = attemptsArray[attemptsArray.length-1];
+          lastScore = lastAttempt.score ?? 0;
+          total += lastScore;
+        }
+
+        html += `<td>${lastScore} / ${maxPointsByTest[testId]}</td>`;
+      }
+
+      html += `<td>${total}</td></tr>`;
+    }
+
+    html += "</table>";
+    statsDiv.innerHTML = html;
+
+  } catch (err) {
+    statsDiv.innerHTML = "Ошибка при загрузке: " + err.message;
+  }
+});
+</script>
+
+</body>
+</html>
