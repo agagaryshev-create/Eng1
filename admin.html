@@ -9,6 +9,8 @@ h1 { text-align: center; }
 button { padding: 10px 20px; margin: 10px 0; }
 table { border-collapse: collapse; width: 100%; margin-top: 20px; }
 th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+.high { background-color: #c8e6c9; }  /* зелёный для высоких баллов */
+.low { background-color: #ffcdd2; }   /* красный для низких */
 </style>
 </head>
 <body>
@@ -21,8 +23,8 @@ th, td { border: 1px solid #333; padding: 8px; text-align: center; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ====== Firebase конфиг ======
 const firebaseConfig = {
@@ -32,22 +34,19 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
 const statsDiv = document.getElementById("statsDiv");
 const loadBtn = document.getElementById("loadStatsBtn");
 
-// Список тестов и их макс. баллы
+// Список тестов и макс. баллы
 const testIds = ["test1","test2","test3","test4","test5"];
 const maxPointsByTest = { test1:3, test2:3, test3:5, test4:3, test5:5 };
 
-// Обработчик кнопки
 loadBtn.addEventListener("click", async () => {
   statsDiv.innerHTML = "Загрузка…";
-  
+
   try {
-    // Получаем всех пользователей Firestore (допустим, есть коллекция results с документами uid)
     const resultsCol = collection(db, "results");
     const usersSnapshot = await getDocs(resultsCol);
 
@@ -56,32 +55,59 @@ loadBtn.addEventListener("click", async () => {
       return;
     }
 
-    let html = "<table><tr><th>Email / UID</th>";
-    testIds.forEach(t => html += `<th>${t}</th>`);
-    html += "<th>Total</th></tr>";
+    const usersData = [];
 
+    // Собираем статистику по каждому пользователю
     for (let userDoc of usersSnapshot.docs) {
       const uid = userDoc.id;
-      let total = 0;
-      html += `<tr><td>${uid}</td>`;
+
+      // Получаем Email пользователя из auth или отдельной коллекции users
+      // Предполагаем, что в Firestore есть коллекция 'users' с документами uid -> {email}
+      let email = uid;
+      const userInfoDoc = await getDoc(doc(db, "users", uid));
+      if (userInfoDoc.exists()) {
+        email = userInfoDoc.data().email || uid;
+      }
+
+      let userRow = { email, uid, total: 0, tests: {} };
 
       for (let testId of testIds) {
         const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
         const attemptsSnapshot = await getDocs(attemptsCol);
 
-        let lastScore = "-";
+        let lastScore = 0;
         if (!attemptsSnapshot.empty) {
-          const attemptsArray = attemptsSnapshot.docs.map(doc => doc.data());
-          const lastAttempt = attemptsArray[attemptsArray.length-1];
+          const attemptsArray = attemptsSnapshot.docs.map(d => d.data());
+          const lastAttempt = attemptsArray[attemptsArray.length -1];
           lastScore = lastAttempt.score ?? 0;
-          total += lastScore;
         }
 
-        html += `<td>${lastScore} / ${maxPointsByTest[testId]}</td>`;
+        userRow.tests[testId] = lastScore;
+        userRow.total += lastScore;
       }
 
-      html += `<td>${total}</td></tr>`;
+      usersData.push(userRow);
     }
+
+    // Сортируем по Total по убыванию
+    usersData.sort((a,b) => b.total - a.total);
+
+    // --- Построение таблицы ---
+    let html = "<table><tr><th>Email</th>";
+    testIds.forEach(t => html += `<th>${t}</th>`);
+    html += "<th>Total</th></tr>";
+
+    usersData.forEach(user => {
+      html += `<tr><td>${user.email}</td>`;
+      testIds.forEach(t => {
+        const score = user.tests[t];
+        const max = maxPointsByTest[t];
+        const perc = (score/max)*100;
+        const cls = perc >= 80 ? 'high' : (perc <= 50 ? 'low' : '');
+        html += `<td class="${cls}">${score} / ${max}</td>`;
+      });
+      html += `<td>${user.total}</td></tr>`;
+    });
 
     html += "</table>";
     statsDiv.innerHTML = html;
