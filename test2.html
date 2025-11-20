@@ -9,6 +9,7 @@ h2 { margin-top: 20px; }
 .question { margin-bottom: 15px; }
 .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
 #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+#back-btn { margin-top: 30px; padding: 8px 12px; cursor: pointer; border: 1px solid #333; background-color: #f0f0f0; }
 </style>
 </head>
 <body>
@@ -44,12 +45,14 @@ Tom likes sports very much. He plays football after school with his friends. His
 <div class="btn" onclick="checkTest()">Проверить</div>
 <div id="result"></div>
 
+<!-- Кнопка возврата -->
+<button id="back-btn">← Вернуться на главную</button>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ====== Вставьте ваш Firebase конфиг ======
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -72,18 +75,35 @@ window.checkTest = async function() {
     if(selected && selected.value === answers[q]) score++;
   }
 
-  document.getElementById("result").innerText = `Ваш результат: ${score} / ${Object.keys(answers).length}`;
+  document.getElementById("result").innerText =
+    `Ваш результат: ${score} / ${Object.keys(answers).length}`;
 
   if(!currentUser) {
     alert("Чтобы сохранить результат — войдите в систему!");
     return;
   }
 
-  await addDoc(collection(db, "results", currentUser.uid, "test2", "attempts"), {
+  // 🔥 Путь к коллекции для test2_attempts
+  const colRef = collection(db, "results", currentUser.uid, "test2_attempts");
+
+  await addDoc(colRef, {
     score: score,
     date: new Date()
   });
 };
+
+// --- Кнопка возврата ---
+const backBtn = document.getElementById("back-btn");
+backBtn.addEventListener("click", () => {
+  if (window.opener) {
+    // если test2 открыт в новой вкладке
+    window.opener.location.reload(); // обновляем index.html
+    window.close(); // закрываем текущую вкладку
+  } else {
+    // если открыт в той же вкладке
+    window.location.href = "index.html";
+  }
+});
 </script>
 
 </body>
