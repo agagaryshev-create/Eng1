@@ -10,6 +10,7 @@ h2 { margin-top: 20px; }
 .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
 input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
 #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+#back-btn { margin-top: 30px; padding: 8px 12px; cursor: pointer; border: 1px solid #333; background-color: #f0f0f0; }
 </style>
 </head>
 <body>
@@ -21,7 +22,6 @@ input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
 Many cities around the world face serious environmental problems. Air pollution, water contamination, and waste management are major concerns. People are encouraged to recycle, use public transport, and plant trees to make their cities greener and healthier.
 </p>
 
-<!-- Задание 1: выбор ответа -->
 <div class="question">
 1. Which of the following is NOT mentioned as an environmental problem?<br>
 <label><input type="radio" name="q1" value="a"> Air pollution</label><br>
@@ -29,13 +29,11 @@ Many cities around the world face serious environmental problems. Air pollution,
 <label><input type="radio" name="q1" value="c"> Noise from traffic</label>
 </div>
 
-<!-- Задание 2: краткий ответ -->
 <div class="question">
 2. Name one action people are encouraged to do to help the environment:<br>
 <input type="text" name="q2" placeholder="ваш ответ">
 </div>
 
-<!-- Задание 3: выбор правильного варианта -->
 <div class="question">
 3. What is the main idea of the text?<br>
 <label><input type="radio" name="q3" value="a"> Cities are clean and healthy</label><br>
@@ -46,12 +44,14 @@ Many cities around the world face serious environmental problems. Air pollution,
 <div class="btn" onclick="checkTest()">Проверить</div>
 <div id="result"></div>
 
+<!-- Кнопка возврата -->
+<button id="back-btn">← Вернуться на главную</button>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ====== Вставьте ваш Firebase конфиг ======
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -72,7 +72,7 @@ window.checkTest = async function() {
   const ans1 = document.querySelector('input[name="q1"]:checked');
   if(ans1 && ans1.value === 'c') score++;
 
-  // Вопрос 2 (краткий ответ)
+  // Вопрос 2
   const ans2 = document.querySelector('input[name="q2"]').value.trim().toLowerCase();
   const correct2 = ["recycle", "use public transport", "plant trees", "plant a tree"];
   if(correct2.includes(ans2)) score++;
@@ -88,11 +88,25 @@ window.checkTest = async function() {
     return;
   }
 
-  await addDoc(collection(db, "results", currentUser.uid, "test4", "attempts"), {
+  // 🔥 Путь к коллекции для test4_attempts
+  const colRef = collection(db, "results", currentUser.uid, "test4_attempts");
+
+  await addDoc(colRef, {
     score: score,
     date: new Date()
   });
 };
+
+// --- Кнопка возврата ---
+const backBtn = document.getElementById("back-btn");
+backBtn.addEventListener("click", () => {
+  if (window.opener) {
+    window.opener.location.reload();
+    window.close();
+  } else {
+    window.location.href = "index.html";
+  }
+});
 </script>
 
 </body>
