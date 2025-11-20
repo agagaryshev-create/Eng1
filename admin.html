@@ -22,8 +22,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import {
-    getFirestore, collection, getDocs,
-    doc, listCollections
+    getFirestore, collection, getDocs
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -41,6 +40,29 @@
   document.getElementById("loadBtn").onclick = loadStats;
   document.getElementById("diagBtn").onclick = runDiag;
 
+  // -------------------------------------------------------
+  // 📌 УТИЛИТА: проверка наличия подколлекции testX_attempts
+  // -------------------------------------------------------
+  async function hasAttempts(uid, testId) {
+    const attemptsCol = collection(db, `results/${uid}/${testId}_attempts`);
+    const snap = await getDocs(attemptsCol);
+    return !snap.empty;
+  }
+
+  async function getLastScore(uid, testId) {
+    const attemptsCol = collection(db, `results/${uid}/${testId}_attempts`);
+    const snap = await getDocs(attemptsCol);
+    if (snap.empty) return null;
+
+    let last = 0;
+    snap.forEach(doc => {
+      const sc = doc.data().score ?? 0;
+      if (sc > last) last = sc;
+    });
+
+    return last;
+  }
+
   // -------------------------------
   // 📌 Функция: Загрузка статистики
   // -------------------------------
@@ -48,66 +70,42 @@
     const output = document.getElementById("output");
     output.innerHTML = "Загрузка...";
 
-    const resultCol = collection(db, "results");
-    const resultSnap = await getDocs(resultCol);
+    let uidSet = new Set();
 
-    let allUIDs = new Set();
+    // 1️⃣ UID из коллекции results/ (даже если документ пустой)
+    const baseSnap = await getDocs(collection(db, "results"));
+    baseSnap.forEach(d => uidSet.add(d.id));
 
-    // 1️⃣ UID из документов results/
-    resultSnap.forEach(doc => allUIDs.add(doc.id));
-
-    // 2️⃣ Поиск UID, которые существуют только как подколлекции
-    for (let uidDoc of resultSnap.docs) {
-      const subcols = await listCollections(uidDoc.ref);
-      if (subcols.length > 0) allUIDs.add(uidDoc.id);
-    }
-
-    // 3️⃣ Важное нововведение: поиск UID через все подколлекции testX_attempts
-    for (let testId of testIds) {
-      const sub = collection(db, `results`);
-      const docs = await getDocs(sub);
-
-      for (let uidDoc of docs.docs) {
-        const attemptsCol = collection(db, `results/${uidDoc.id}/${testId}_attempts`);
-        const attemptsSnap = await getDocs(attemptsCol);
-        if (!attemptsSnap.empty) {
-          allUIDs.add(uidDoc.id);
+    // 2️⃣ Добавляем UID, у которых есть только подколлекции
+    for (let d of baseSnap.docs) {
+      for (let testId of testIds) {
+        if (await hasAttempts(d.id, testId)) {
+          uidSet.add(d.id);
         }
       }
     }
 
-    // 📌 Теперь в allUIDs попадёт даже UID без документа, но с попытками
-    const uidList = Array.from(allUIDs);
+    const uids = Array.from(uidSet);
 
     let html = `<table><tr><th>Email / UID</th>`;
     testIds.forEach(t => html += `<th>${t}</th>`);
     html += `<th>Total</th></tr>`;
 
-    for (let uid of uidList) {
+    for (let uid of uids) {
       html += `<tr><td>${uid}</td>`;
 
       let total = 0;
       let totalMax = 0;
 
       for (let testId of testIds) {
-        const attemptsCol = collection(db, `results/${uid}/${testId}_attempts`);
-        const snap = await getDocs(attemptsCol);
-
-        if (snap.empty) {
+        const score = await getLastScore(uid, testId);
+        if (score === null) {
           html += `<td>–</td>`;
-          continue;
+        } else {
+          total += score;
+          totalMax += maxPoints[testId];
+          html += `<td>${score} / ${maxPoints[testId]}</td>`;
         }
-
-        let lastScore = 0;
-        snap.forEach(doc => {
-          const s = doc.data().score ?? 0;
-          if (s > lastScore) lastScore = s;
-        });
-
-        total += lastScore;
-        totalMax += maxPoints[testId];
-
-        html += `<td>${lastScore} / ${maxPoints[testId]}</td>`;
       }
 
       html += `<td>${total} / ${totalMax}</td></tr>`;
@@ -122,24 +120,25 @@
   // ---------------------------
   async function runDiag() {
     const output = document.getElementById("output");
-    let html = "<h3>Диагностика</h3>";
 
-    const resSnap = await getDocs(collection(db, "results"));
+    const baseSnap = await getDocs(collection(db, "results"));
+    let html = `<h3>Диагностика</h3>`;
+    html += `Документов в results: ${baseSnap.size}<br><br>`;
 
-    html += `Всего найдено UID в results: ${resSnap.size}<br><br>`;
+    for (let d of baseSnap.docs) {
+      html += `<b>UID: ${d.id}</b><br>`;
 
-    for (let d of resSnap.docs) {
-      html += `<b>${d.id}</b><br>`;
-      const subcols = await listCollections(d.ref);
-      for (let col of subcols) {
-        html += `&nbsp;&nbsp;${col.id}<br>`;
+      for (let testId of testIds) {
+        const attemptsCol = collection(db, `results/${d.id}/${testId}_attempts`);
+        const snap = await getDocs(attemptsCol);
+        html += `&nbsp;&nbsp;${testId}_attempts — ${snap.size} записей<br>`;
       }
+
       html += `<br>`;
     }
 
     output.innerHTML = html;
   }
-
 </script>
 
 </body>
