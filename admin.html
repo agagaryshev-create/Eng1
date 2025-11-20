@@ -23,7 +23,6 @@ th, td { border: 1px solid #333; padding: 8px; text-align: center; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ====== Firebase конфиг ======
@@ -61,8 +60,7 @@ loadBtn.addEventListener("click", async () => {
     for (let userDoc of usersSnapshot.docs) {
       const uid = userDoc.id;
 
-      // Получаем Email пользователя из auth или отдельной коллекции users
-      // Предполагаем, что в Firestore есть коллекция 'users' с документами uid -> {email}
+      // Получаем Email пользователя из коллекции 'users' или используем UID
       let email = uid;
       const userInfoDoc = await getDoc(doc(db, "users", uid));
       if (userInfoDoc.exists()) {
@@ -77,12 +75,18 @@ loadBtn.addEventListener("click", async () => {
 
         let lastScore = 0;
         if (!attemptsSnapshot.empty) {
-          const attemptsArray = attemptsSnapshot.docs.map(d => d.data());
-          const lastAttempt = attemptsArray[attemptsArray.length -1];
-          lastScore = lastAttempt.score ?? 0;
+          const attemptsArray = attemptsSnapshot.docs.map(d => {
+            const data = d.data();
+            return {
+              score: data.score ?? 0,
+              date: data.date?.toDate ? data.date.toDate() : new Date(0)
+            };
+          });
+          attemptsArray.sort((a,b) => a.date - b.date);
+          lastScore = attemptsArray[attemptsArray.length-1].score;
         }
 
-        userRow.tests[testId] = lastScore;
+        userRow.tests[testId] = lastScore; // даже если lastScore = 0
         userRow.total += lastScore;
       }
 
@@ -93,7 +97,7 @@ loadBtn.addEventListener("click", async () => {
     usersData.sort((a,b) => b.total - a.total);
 
     // --- Построение таблицы ---
-    let html = "<table><tr><th>Email</th>";
+    let html = "<table><tr><th>Email / UID</th>";
     testIds.forEach(t => html += `<th>${t}</th>`);
     html += "<th>Total</th></tr>";
 
