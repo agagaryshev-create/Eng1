@@ -10,6 +10,7 @@ h2 { margin-top: 20px; }
 .btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
 input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
 #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+#back-btn { margin-top: 30px; padding: 8px 12px; cursor: pointer; border: 1px solid #333; background-color: #f0f0f0; }
 </style>
 </head>
 <body>
@@ -21,7 +22,6 @@ input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
 John usually wakes up at 7 a.m. He eats breakfast, checks his emails, and goes to work by bus. After work, he likes to cook dinner and watch TV. On weekends, he visits his friends or goes to the park.
 </p>
 
-<!-- Вопрос 1: выбор ответа -->
 <div class="question">
 1. How does John go to work?<br>
 <label><input type="radio" name="q1" value="a"> By car</label><br>
@@ -29,7 +29,6 @@ John usually wakes up at 7 a.m. He eats breakfast, checks his emails, and goes t
 <label><input type="radio" name="q1" value="c"> By bike</label>
 </div>
 
-<!-- Вопрос 2: заполнение пропуска -->
 <div class="question">
 2. After work, John likes to ___ dinner and watch TV.<br>
 <input type="text" name="q2" placeholder="ваш ответ">
@@ -58,12 +57,14 @@ Match the activity to the correct day John does it most often:
 <div class="btn" onclick="checkTest()">Проверить</div>
 <div id="result"></div>
 
+<!-- Кнопка возврата -->
+<button id="back-btn">← Вернуться на главную</button>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ====== Вставьте ваш Firebase конфиг ======
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -103,11 +104,25 @@ window.checkTest = async function() {
     return;
   }
 
-  await addDoc(collection(db, "results", currentUser.uid, "test5", "attempts"), {
+  // 🔥 Путь к коллекции test5_attempts
+  const colRef = collection(db, "results", currentUser.uid, "test5_attempts");
+
+  await addDoc(colRef, {
     score: score,
     date: new Date()
   });
 };
+
+// --- Кнопка возврата ---
+const backBtn = document.getElementById("back-btn");
+backBtn.addEventListener("click", () => {
+  if (window.opener) {
+    window.opener.location.reload();
+    window.close();
+  } else {
+    window.location.href = "index.html";
+  }
+});
 </script>
 
 </body>
