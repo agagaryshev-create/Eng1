@@ -17,10 +17,10 @@ h2 { margin-top: 20px; }
 
 <h2>Text 1</h2>
 <p>
-Alice lives in a small town near the mountains. She enjoys studying English and dreams of becoming a teacher. On weekends, she helps her parents and reads adventure books.
+Alice lives in a small town near the mountains. She enjoys studying English and dreams of becoming a teacher. 
+On weekends, she helps her parents and reads adventure books.
 </p>
 
-<!-- Вопросы ОГЭ style -->
 <div class="question">
 1. Where does Alice live?<br>
 <label><input type="radio" name="q1" value="a"> In a small town</label><br>
@@ -66,18 +66,28 @@ onAuthStateChanged(auth, user => { currentUser = user; });
 window.checkTest = async function() {
   const answers = {q1:'a', q2:'b', q3:'b'};
   let score = 0;
+
   for (let q of Object.keys(answers)) {
     const selected = document.querySelector(`input[name="${q}"]:checked`);
-    if(selected && selected.value === answers[q]) score++;
+    if (selected && selected.value === answers[q]) score++;
   }
-  document.getElementById("result").innerText = `Ваш результат: ${score} / ${Object.keys(answers).length}`;
 
-  if(!currentUser) { alert("Чтобы сохранить результат — войдите!"); return; }
+  document.getElementById("result").innerText =
+    `Ваш результат: ${score} / ${Object.keys(answers).length}`;
 
-  await addDoc(collection(db, "results", currentUser.uid, "test1", "attempts"), {
+  if (!currentUser) {
+    alert("Чтобы сохранить результат — войдите!");
+    return;
+  }
+
+  // 🔥 Исправленный путь
+  const colRef = collection(db, "results", currentUser.uid, "test1_attempts");
+
+  await addDoc(colRef, {
     score: score,
     date: new Date()
   });
+
 };
 </script>
 
