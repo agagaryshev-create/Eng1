@@ -130,8 +130,8 @@ async function showFullStats(uid) {
   const chartLabels = [];
   const chartData = [];
 
-  let totalScore = 0;
-  let totalMaxScore = 0;
+  let totalLastAttempts = 0;
+  let totalMaxPoints = 0;
 
   for (let testId of testIds) {
     const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
@@ -139,20 +139,29 @@ async function showFullStats(uid) {
 
     if (attemptsSnapshot.empty) continue;
 
-    testsData[testId] = [];
-
-    attemptsSnapshot.forEach(doc => {
+    const attemptsArray = attemptsSnapshot.docs.map(doc => {
       const data = doc.data();
-      const score = data.score ?? 0;
-      const dateStr = data.date?.toDate ? data.date.toDate().toLocaleString() : "неизвестно";
+      return {
+        score: data.score ?? 0,
+        date: data.date?.toDate ? data.date.toDate() : null
+      };
+    });
 
-      testsData[testId].push({ score, dateStr });
+    // сортировка по дате по возрастанию
+    attemptsArray.sort((a, b) => a.date - b.date);
 
-      totalScore += score;
-      totalMaxScore += maxPointsByTest[testId] ?? 0;
+    testsData[testId] = attemptsArray;
 
-      chartLabels.push(`${testId} (${dateStr.split(',')[0]})`);
-      chartData.push(score);
+    // --- подсчёт общей суммы последних попыток ---
+    const lastAttempt = attemptsArray[attemptsArray.length - 1];
+    totalLastAttempts += lastAttempt.score;
+    totalMaxPoints += maxPointsByTest[testId] ?? 0;
+
+    // --- подготовка данных для графика ---
+    attemptsArray.forEach((a, idx) => {
+      const dateStr = a.date ? a.date.toLocaleString() : "неизвестно";
+      chartLabels.push(`${testId}${idx === attemptsArray.length -1 ? ' (последняя)' : ''} (${dateStr.split(',')[0]})`);
+      chartData.push(a.score);
     });
   }
 
@@ -162,19 +171,21 @@ async function showFullStats(uid) {
   for (let testId of testIds) {
     html += `<h3>${testId}</h3>`;
 
-    if (!testsData[testId]) {
+    if (!testsData[testId] || testsData[testId].length === 0) {
       html += "<p>Нет попыток</p>";
       continue;
     }
 
     html += `<table><tr><th>Дата</th><th>Баллы</th></tr>`;
-    testsData[testId].forEach(a => {
-      html += `<tr><td>${a.dateStr}</td><td>${a.score} / ${maxPointsByTest[testId]}</td></tr>`;
+    testsData[testId].forEach((a, idx, arr) => {
+      const dateStr = a.date ? a.date.toLocaleString() : "неизвестно";
+      const isLast = idx === arr.length - 1 ? ' ← последняя попытка' : '';
+      html += `<tr><td>${dateStr}</td><td>${a.score} / ${maxPointsByTest[testId]}${isLast}</td></tr>`;
     });
     html += "</table>";
   }
 
-  html += `<p><strong>Общий результат: ${totalScore} / ${totalMaxScore}</strong></p>`;
+  html += `<p><strong>Общий результат последних попыток: ${totalLastAttempts} / ${totalMaxPoints}</strong></p>`;
   statsDiv.innerHTML = html;
 
   // --- График ---
@@ -202,6 +213,7 @@ async function showFullStats(uid) {
     chartCanvas.style.display = "none";
   }
 }
+
 
 </script>
 
