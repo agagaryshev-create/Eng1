@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Admin Stats</title>
-<style>
-  body { font-family: Arial; padding: 20px; }
-  table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-  th { background: #eee; }
-  button { padding: 10px 20px; margin-right: 10px; margin-top: 10px; }
-</style>
+  <meta charset="UTF-8">
+  <title>Admin Stats</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #eee; }
+    button { padding: 10px 20px; margin-right: 10px; }
+  </style>
 </head>
 <body>
 
@@ -23,54 +23,43 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ===== Firebase config =====
+// ====== Firebase конфиг ======
 const firebaseConfig = {
-  apiKey: "ВАШ_API_KEY",
-  authDomain: "ВАШ_AUTH_DOMAIN",
-  projectId: "ВАШ_PROJECT_ID"
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const testIds = ["test1","test2","test3","test4","test5"];
-const maxPoints = { test1:3, test2:3, test3:5, test4:3, test5:5 };
+const maxPoints = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
 
 document.getElementById("loadBtn").onclick = loadStats;
 document.getElementById("diagBtn").onclick = runDiag;
 
 // -------------------------------
-// Загрузка статистики
+// 📌 Функция: Загрузка статистики
 // -------------------------------
 async function loadStats() {
   const output = document.getElementById("output");
   output.innerHTML = "Загрузка...";
 
-  const resultsSnap = await getDocs(collection(db, "results"));
-  const allUIDs = new Set();
+  const resultCol = collection(db, "results");
+  const resultSnap = await getDocs(resultCol);
 
-  // 1. UID с документами
-  resultsSnap.forEach(doc => allUIDs.add(doc.id));
+  const uidList = resultSnap.docs.map(d => d.id);
 
-  // 2. UID с попытками в подколлекциях testX_attempts
-  for (let uidDoc of resultsSnap.docs) {
-    for (let testId of testIds) {
-      const attemptsCol = collection(db, `results/${uidDoc.id}/${testId}_attempts`);
-      const attemptsSnap = await getDocs(attemptsCol);
-      if (!attemptsSnap.empty) allUIDs.add(uidDoc.id);
-    }
-  }
-
-  const uidList = Array.from(allUIDs);
-
-  // строим таблицу
   let html = `<table><tr><th>Email / UID</th>`;
   testIds.forEach(t => html += `<th>${t}</th>`);
   html += `<th>Total</th></tr>`;
 
   for (let uid of uidList) {
     html += `<tr><td>${uid}</td>`;
-    let total = 0, totalMax = 0;
+
+    let totalScore = 0;
+    let totalMax = 0;
 
     for (let testId of testIds) {
       const attemptsCol = collection(db, `results/${uid}/${testId}_attempts`);
@@ -82,45 +71,40 @@ async function loadStats() {
         continue;
       }
 
-      // берём **последнюю попытку** по дате
       let lastScore = 0;
       snap.forEach(doc => {
-        const data = doc.data();
-        if (data.date && data.score !== undefined) {
-          const score = data.score;
-          if (score > lastScore) lastScore = score;
-        }
+        const s = doc.data().score ?? 0;
+        if (s > lastScore) lastScore = s;
       });
 
-      total += lastScore;
-      totalMax += maxPoints[testId];
-
       html += `<td>${lastScore} / ${maxPoints[testId]}</td>`;
+      totalScore += lastScore;
+      totalMax += maxPoints[testId];
     }
 
-    html += `<td>${total} / ${totalMax}</td></tr>`;
+    html += `<td>${totalScore} / ${totalMax}</td></tr>`;
   }
 
   html += `</table>`;
   output.innerHTML = html;
 }
 
-// -------------------------------
-// Диагностика
-// -------------------------------
+// ---------------------------
+// 📌 Диагностика
+// ---------------------------
 async function runDiag() {
   const output = document.getElementById("output");
-  let html = "<h3>Диагностика</h3>";
+  const resultSnap = await getDocs(collection(db, "results"));
 
-  const resultsSnap = await getDocs(collection(db, "results"));
-  html += `Документов в results: ${resultsSnap.size}<br><br>`;
+  let html = `<h3>Диагностика</h3>`;
+  html += `Всего документов в results: ${resultSnap.size}<br><br>`;
 
-  for (let d of resultsSnap.docs) {
-    html += `<b>UID: ${d.id}</b><br>`;
+  for (let d of resultSnap.docs) {
+    html += `<b>${d.id}</b><br>`;
     for (let testId of testIds) {
       const attemptsCol = collection(db, `results/${d.id}/${testId}_attempts`);
-      const attemptsSnap = await getDocs(attemptsCol);
-      html += `&nbsp;&nbsp;${testId}: ${attemptsSnap.size} записей<br>`;
+      const snap = await getDocs(attemptsCol);
+      html += `&nbsp;&nbsp;${testId}: ${snap.size} записей<br>`;
     }
     html += `<br>`;
   }
@@ -128,5 +112,6 @@ async function runDiag() {
   output.innerHTML = html;
 }
 </script>
+
 </body>
 </html>
