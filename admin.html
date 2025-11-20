@@ -4,21 +4,16 @@
 <meta charset="UTF-8">
 <title>Admin – Сводная статистика</title>
 <style>
-body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; line-height: 1.6; }
-h1 { text-align: center; }
-button { padding: 10px 20px; margin: 10px 0; }
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
 table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-th, td { border: 1px solid #333; padding: 8px; text-align: center; }
-.high { background-color: #c8e6c9; }  /* зелёный для высоких баллов */
-.low { background-color: #ffcdd2; }   /* красный для низких */
+th, td { border: 1px solid #333; padding: 6px; text-align: center; }
+button { padding: 8px 16px; margin: 10px 0; }
 </style>
 </head>
 <body>
 
-<h1>Админская сводная статистика</h1>
-
-<button id="loadStatsBtn">Получить статистику</button>
-
+<h1>Сводная статистика пользователей</h1>
+<button id="loadStatsBtn">Получить статистику!!!</button>
 <div id="statsDiv"></div>
 
 <script type="module">
@@ -36,84 +31,52 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const statsDiv = document.getElementById("statsDiv");
-const loadBtn = document.getElementById("loadStatsBtn");
-
-// Список тестов и макс. баллы
 const testIds = ["test1","test2","test3","test4","test5"];
-const maxPointsByTest = { test1:3, test2:3, test3:5, test4:3, test5:5 };
+const maxPoints = { test1:3, test2:3, test3:5, test4:3, test5:5 };
 
-loadBtn.addEventListener("click", async () => {
+document.getElementById("loadStatsBtn").onclick = async () => {
   statsDiv.innerHTML = "Загрузка…";
 
-  try {
-    const resultsCol = collection(db, "results");
-    const usersSnapshot = await getDocs(resultsCol);
+  const resultsCol = collection(db, "results");
+  const usersSnap = await getDocs(resultsCol);
 
-    if (usersSnapshot.empty) {
-      statsDiv.innerHTML = "Нет пользователей.";
-      return;
-    }
+  if (usersSnap.empty) {
+    statsDiv.innerHTML = "Нет пользователей.";
+    return;
+  }
 
-    const usersData = [];
+  let html = "<table><tr><th>Email / UID</th>" + testIds.map(t=>`<th>${t}</th>`).join("") + "<th>Total</th></tr>";
 
-    for (let userDoc of usersSnapshot.docs) {
-      const uid = userDoc.id;
+  for (let userDoc of usersSnap.docs) {
+    const uid = userDoc.id;
+    let total = 0, totalMax = 0;
+    let row = `<tr><td>${uid}</td>`;
 
-      let userRow = { uid, totalScore: 0, totalMax: 0, tests: {} };
+    for (let testId of testIds) {
+      const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
+      const attemptsSnap = await getDocs(attemptsCol);
 
-      // Перебор тестов
-      for (let testId of testIds) {
-        const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
-        const attemptsSnapshot = await getDocs(attemptsCol);
-
-        let lastScore = 0; // по умолчанию 0, если попыток нет
-        if (!attemptsSnapshot.empty) {
-          const attemptsArray = attemptsSnapshot.docs.map(d => {
-            const data = d.data();
-            return {
-              score: data.score ?? 0,
-              date: data.date?.toDate ? data.date.toDate() : new Date(0)
-            };
-          });
-          attemptsArray.sort((a,b) => a.date - b.date);
-          lastScore = attemptsArray[attemptsArray.length - 1].score;
-        }
-
-        userRow.tests[testId] = lastScore;
-        userRow.totalScore += lastScore;
-        userRow.totalMax += maxPointsByTest[testId];
+      let lastScore = 0;
+      if (!attemptsSnap.empty) {
+        const arr = attemptsSnap.docs.map(d => {
+          const data = d.data();
+          return { score: data.score ?? 0, date: data.date?.toDate ? data.date.toDate() : new Date(0) };
+        }).sort((a,b)=>a.date-b.date);
+        lastScore = arr[arr.length-1].score;
       }
 
-      usersData.push(userRow);
+      row += `<td>${lastScore} / ${maxPoints[testId]}</td>`;
+      total += lastScore;
+      totalMax += maxPoints[testId];
     }
 
-    // Сортируем по Total по убыванию
-    usersData.sort((a,b) => b.totalScore - a.totalScore);
-
-    // --- Построение таблицы ---
-    let html = "<table><tr><th>Email / UID</th>";
-    testIds.forEach(t => html += `<th>${t}</th>`);
-    html += "<th>Total</th></tr>";
-
-    usersData.forEach(user => {
-      html += `<tr><td>${user.uid}</td>`;
-      testIds.forEach(t => {
-        const score = user.tests[t];
-        const max = maxPointsByTest[t];
-        const perc = (score/max)*100;
-        const cls = perc >= 80 ? 'high' : (perc <= 50 ? 'low' : '');
-        html += `<td class="${cls}">${score} / ${max}</td>`;
-      });
-      html += `<td>${user.totalScore} / ${user.totalMax}</td></tr>`;
-    });
-
-    html += "</table>";
-    statsDiv.innerHTML = html;
-
-  } catch (err) {
-    statsDiv.innerHTML = "Ошибка при загрузке: " + err.message;
+    row += `<td>${total} / ${totalMax}</td></tr>`;
+    html += row;
   }
-});
+
+  html += "</table>";
+  statsDiv.innerHTML = html;
+};
 </script>
 
 </body>
