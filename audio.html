@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Аудирование — Тест 1</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; line-height: 1.5; }
+h1 { text-align: center; }
+button { padding: 10px 15px; margin-top: 10px; }
+#result { margin-top: 20px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Тест на аудирование</h1>
+
+<p>Прослушайте аудио и выберите правильный ответ:</p>
+
+<!-- Аудио -->
+<audio id="audio" controls>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  Ваш браузер не поддерживает аудио.
+</audio>
+
+<!-- Вопрос -->
+<p>Что сказал человек в аудио?</p>
+<form id="quizForm">
+  <input type="radio" name="answer" value="a" id="a"><label for="a">Вариант A</label><br>
+  <input type="radio" name="answer" value="b" id="b"><label for="b">Вариант B</label><br>
+  <input type="radio" name="answer" value="c" id="c"><label for="c">Вариант C</label><br>
+  <button type="submit">Проверить</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+const correctAnswer = "b"; // правильный ответ
+
+document.getElementById("quizForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const selected = document.querySelector('input[name="answer"]:checked');
+  const resultDiv = document.getElementById("result");
+  
+  if (!selected) {
+    resultDiv.textContent = "Выберите вариант ответа!";
+    return;
+  }
+  
+  if (selected.value === correctAnswer) {
+    resultDiv.textContent = "✅ Правильно!";
+    resultDiv.style.color = "green";
+  } else {
+    resultDiv.textContent = "❌ Неправильно!";
+    resultDiv.style.color = "red";
+  }
+});
+</script>
+
+</body>
+</html>
