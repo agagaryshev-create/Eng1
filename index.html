@@ -43,7 +43,7 @@ button { cursor: pointer; }
 
 <h1>English OGE Tests</h1>
 
-  <div style="margin-top: 20px;">
+<div style="margin-top: 20px;">
   <button onclick="location.href='OGE_English_Guide.html'" 
           style="padding:10px 20px; font-size:16px; cursor:pointer;">
     📖 Шпаргалка по ОГЭ
@@ -52,7 +52,7 @@ button { cursor: pointer; }
     Нажмите на кнопку, чтобы открыть компактную шпаргалку с основными разделами ОГЭ по английскому: аудирование, чтение, грамматика, письмо и устная часть. Подходит для быстрого повторения перед экзаменом.
   </p>
 </div>
-  
+
 <div class="auth-box" id="auth">
   <h3>Авторизация</h3>
   <input type="email" id="email" placeholder="Email">
@@ -77,22 +77,16 @@ button { cursor: pointer; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ===== Firebase конфиг =====
+// ===== Firebase конфиг и инициализация =====
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
   projectId: "engtestoge"
 };
-
-
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-
-
-
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ----------------------
@@ -101,10 +95,10 @@ const db = getFirestore(app);
 async function logVisit() {
   try {
     await addDoc(collection(db, "visits"), {
-      timestamp: serverTimestamp(),       // Время посещения
-      page: "index.html",                 // Страница
-      userAgent: navigator.userAgent,     // Браузер/устройство
-      referrer: document.referrer         // Откуда пришёл пользователь
+      timestamp: serverTimestamp(),
+      page: "index.html",
+      userAgent: navigator.userAgent,
+      referrer: document.referrer
     });
     console.log("Visit logged successfully");
   } catch (err) {
@@ -115,33 +109,9 @@ async function logVisit() {
 // Вызываем при загрузке страницы
 logVisit();
 
-
 // ----------------------
-// Функция логирования посещения
+// Авторизация и статистика
 // ----------------------
-async function logVisit() {
-  try {
-    await addDoc(collection(db, "visits"), {
-      timestamp: serverTimestamp(),       // Время посещения
-      page: "index.html",                 // Страница
-      userAgent: navigator.userAgent,     // Браузер/устройство
-      referrer: document.referrer         // Откуда пришёл пользователь
-    });
-    console.log("Visit logged successfully");
-  } catch (err) {
-    console.error("Error logging visit:", err);
-  }
-}
-
-// Вызываем при загрузке страницы
-
-
-
-  
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const registerBtn = document.getElementById("register-btn");
@@ -157,16 +127,11 @@ const maxPointsByTest = { test1:3, test2:3, test3:5, test4:3, test5:5 };
 
 // ===== Регистрация =====
 registerBtn.addEventListener("click", async () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
     const uid = userCredential.user.uid;
     authMsg.innerText = "Регистрация успешна!";
-
-    // Создаём пустой документ в results для нового пользователя
     await setDoc(doc(db, "results", uid), { created: new Date() });
-
   } catch (err) {
     authMsg.innerText = "Ошибка: " + err.message;
   }
@@ -174,21 +139,12 @@ registerBtn.addEventListener("click", async () => {
 
 // ===== Вход =====
 loginBtn.addEventListener("click", async () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    authMsg.innerText = "Вход выполнен!";
-  } catch (err) {
-    authMsg.innerText = "Ошибка: " + err.message;
-  }
+  try { await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value); authMsg.innerText = "Вход выполнен!"; } 
+  catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
 });
 
 // ===== Выход =====
-logoutBtn.addEventListener("click", async () => {
-  try { await signOut(auth); } 
-  catch (err) { alert("Ошибка выхода: " + err.message); }
-});
+logoutBtn.addEventListener("click", async () => { try { await signOut(auth); } catch (err) { alert("Ошибка выхода: " + err.message); } });
 
 // ===== Слежение за авторизацией =====
 onAuthStateChanged(auth, async (user) => {
