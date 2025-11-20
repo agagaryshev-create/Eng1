@@ -13,7 +13,7 @@ th, td { border: 1px solid #777; padding: 6px; text-align: center; }
 </head>
 <body>
 
-<h1>Super Admin Panel – English OGE Tests</h1>
+<h1>Admin Panel – English OGE Tests</h1>
 <button id="showStatsBtn">Показать статистику</button>
 <button id="showDiagBtn">Показать диагностику</button>
 
@@ -24,10 +24,11 @@ th, td { border: 1px solid #777; padding: 6px; text-align: center; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
+// ====== Настройка Firebase ======
 const firebaseConfig = {
-  apiKey: "AIzaSyC6lftEB2nUifpZhE8Ays0d__BzynmvYdY",
-  authDomain: "eng1-4fbc2.firebaseapp.com",
-  projectId: "eng1-4fbc2"
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -38,15 +39,11 @@ const maxPoints = { test1:3, test2:3, test3:5, test4:3, test5:5 };
 
 const statsDiv = document.getElementById("stats");
 const diagDiv = document.getElementById("diagnostics");
-const showStatsBtn = document.getElementById("showStatsBtn");
-const showDiagBtn = document.getElementById("showDiagBtn");
 
 // --- Показать статистику ---
-showStatsBtn.addEventListener("click", async () => {
+document.getElementById("showStatsBtn").addEventListener("click", async () => {
   statsDiv.innerHTML = "Загрузка...";
-  const resultsCol = collection(db, "results");
-  const usersSnap = await getDocs(resultsCol);
-
+  const usersSnap = await getDocs(collection(db, "results"));
   let rows = [];
 
   for (const userDoc of usersSnap.docs) {
@@ -55,15 +52,12 @@ showStatsBtn.addEventListener("click", async () => {
     let row = { uid };
 
     for (const test of testIds) {
-      const attemptsCol = collection(db, `results/${uid}/${test}_attempts`);
-      const attemptsSnap = await getDocs(attemptsCol);
-
+      const attemptsSnap = await getDocs(collection(db, "results", uid, `${test}_attempts`));
       let best = 0;
       attemptsSnap.forEach(a => {
         const pts = a.data().score || 0;
         if (pts > best) best = pts;
       });
-
       row[test] = `${best} / ${maxPoints[test]}`;
       totalEarned += best;
       totalMax += maxPoints[test];
@@ -92,18 +86,16 @@ function renderStatsTable(rows) {
 }
 
 // --- Показать диагностику ---
-showDiagBtn.addEventListener("click", async () => {
+document.getElementById("showDiagBtn").addEventListener("click", async () => {
   diagDiv.innerHTML = "Загрузка диагностики...";
-  const resultsCol = collection(db, "results");
-  const usersSnap = await getDocs(resultsCol);
+  const usersSnap = await getDocs(collection(db, "results"));
   let diagText = `Всего UID в results: ${usersSnap.size}\n\n`;
 
   for (const userDoc of usersSnap.docs) {
     const uid = userDoc.id;
     diagText += `UID: ${uid}\n`;
     for (const test of testIds) {
-      const attemptsCol = collection(db, `results/${uid}/${test}_attempts`);
-      const attemptsSnap = await getDocs(attemptsCol);
+      const attemptsSnap = await getDocs(collection(db, "results", uid, `${test}_attempts`));
       diagText += `  ${test}: ${attemptsSnap.size} попыток\n`;
     }
     diagText += "\n";
