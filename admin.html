@@ -1,82 +1,107 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Admin – Сводная статистика</title>
-<style>
-body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
-table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-th, td { border: 1px solid #333; padding: 6px; text-align: center; }
-button { padding: 8px 16px; margin: 10px 0; }
-</style>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <style>
+        table { border-collapse: collapse; }
+        td, th { border: 1px solid #777; padding: 6px; }
+    </style>
 </head>
 <body>
-
-<h1>Сводная статистика пользователей</h1>
-<button id="loadStatsBtn">Получить статистику!!!</button>
-<div id="statsDiv"></div>
+<h2>Results</h2>
+<table id="resultsTable">
+    <thead>
+        <tr>
+            <th>Email / UID</th>
+            <th>test1</th>
+            <th>test2</th>
+            <th>test3</th>
+            <th>test4</th>
+            <th>test5</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ====== Firebase конфиг ======
 const firebaseConfig = {
-  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
-  authDomain: "engtestoge.firebaseapp.com",
-  projectId: "engtestoge"
+    apiKey: "AIzaSyC6lftEB2nUifpZhE8Ays0d__BzynmvYdY",
+    authDomain: "eng1-4fbc2.firebaseapp.com",
+    projectId: "eng1-4fbc2",
+    storageBucket: "eng1-4fbc2.firebasestorage.app",
+    messagingSenderId: "160245467739",
+    appId: "1:160245467739:web:2022400986a2938748fae5"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const statsDiv = document.getElementById("statsDiv");
-const testIds = ["test1","test2","test3","test4","test5"];
+// --- тесты и максимальные баллы ---
+const tests = ["test1","test2","test3","test4","test5"];
 const maxPoints = { test1:3, test2:3, test3:5, test4:3, test5:5 };
 
-document.getElementById("loadStatsBtn").onclick = async () => {
-  statsDiv.innerHTML = "Загрузка…";
+async function loadResults() {
+    const resultsCol = collection(db, "results");
+    const usersSnap = await getDocs(resultsCol);
 
-  const resultsCol = collection(db, "results");
-  const usersSnap = await getDocs(resultsCol);
+    const rows = []; // ← собираем сюда ВСЁ
 
-  if (usersSnap.empty) {
-    statsDiv.innerHTML = "Нет пользователей.";
-    return;
-  }
+    for (const userDoc of usersSnap.docs) {
+        const uid = userDoc.id;
+        let totalEarned = 0;
+        let totalPossible = 0;
 
-  let html = "<table><tr><th>Email / UID</th>" + testIds.map(t=>`<th>${t}</th>`).join("") + "<th>Total</th></tr>";
+        const row = { uid };
 
-  for (let userDoc of usersSnap.docs) {
-    const uid = userDoc.id;
-    let total = 0, totalMax = 0;
-    let row = `<tr><td>${uid}</td>`;
+        for (const test of tests) {
+            const sub = collection(db, `results/${uid}/${test}_attempts`);
+            const subSnap = await getDocs(sub);
 
-    for (let testId of testIds) {
-      const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
-      const attemptsSnap = await getDocs(attemptsCol);
+            let best = 0;
 
-      let lastScore = 0;
-      if (!attemptsSnap.empty) {
-        const arr = attemptsSnap.docs.map(d => {
-          const data = d.data();
-          return { score: data.score ?? 0, date: data.date?.toDate ? data.date.toDate() : new Date(0) };
-        }).sort((a,b)=>a.date-b.date);
-        lastScore = arr[arr.length-1].score;
-      }
+            subSnap.forEach(a => {
+                const pts = a.data().score || 0;
+                if (pts > best) best = pts;
+            });
 
-      row += `<td>${lastScore} / ${maxPoints[testId]}</td>`;
-      total += lastScore;
-      totalMax += maxPoints[testId];
+            row[test] = `${best} / ${maxPoints[test]}`;
+
+            totalEarned += best;
+            totalPossible += maxPoints[test];
+        }
+
+        row.total = `${totalEarned} / ${totalPossible}`;
+        rows.push(row);
     }
 
-    row += `<td>${total} / ${totalMax}</td></tr>`;
-    html += row;
-  }
+    renderTable(rows);
+}
 
-  html += "</table>";
-  statsDiv.innerHTML = html;
-};
+function renderTable(rows) {
+    const tbody = document.querySelector("#resultsTable tbody");
+    tbody.innerHTML = "";
+
+    for (const r of rows) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${r.uid}</td>
+            <td>${r.test1}</td>
+            <td>${r.test2}</td>
+            <td>${r.test3}</td>
+            <td>${r.test4}</td>
+            <td>${r.test5}</td>
+            <td>${r.total}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+loadResults();
 </script>
 
 </body>
