@@ -123,15 +123,7 @@ onAuthStateChanged(auth, async (user) => {
 // Функция для вывода статистики и графика
 // глобальная переменная для хранения объекта Chart
 async function showFullStats(uid) {
-  const testsCol = collection(db, "results", uid, "tests");
-  const testsSnapshot = await getDocs(testsCol);
-
-  if (testsSnapshot.empty) {
-    statsDiv.innerText = "Нет результатов.";
-    chartCanvas.style.display = "none";
-    return;
-  }
-
+  const testIds = ["test1", "test2", "test3", "test4", "test5"];
   const maxPointsByTest = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
   const testsData = {};
 
@@ -141,11 +133,8 @@ async function showFullStats(uid) {
   let totalScore = 0;
   let totalMaxScore = 0;
 
-  // --- Идём по тестам ---
-  for (let testDoc of testsSnapshot.docs) {
-    const testId = testDoc.id;
-
-    const attemptsCol = collection(db, "results", uid, "tests", testId, "attempts");
+  for (let testId of testIds) {
+    const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
     const attemptsSnapshot = await getDocs(attemptsCol);
 
     if (attemptsSnapshot.empty) continue;
@@ -170,7 +159,7 @@ async function showFullStats(uid) {
   // --- Таблица ---
   let html = "<h2>История результатов</h2>";
 
-  for (let testId in maxPointsByTest) {
+  for (let testId of testIds) {
     html += `<h3>${testId}</h3>`;
 
     if (!testsData[testId]) {
@@ -213,7 +202,6 @@ async function showFullStats(uid) {
     chartCanvas.style.display = "none";
   }
 }
-
 
 </script>
 
