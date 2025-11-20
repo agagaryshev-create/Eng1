@@ -87,6 +87,34 @@ const firebaseConfig = {
 };
 
 
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ----------------------
+// Функция логирования посещения
+// ----------------------
+async function logVisit() {
+  try {
+    await addDoc(collection(db, "visits"), {
+      timestamp: serverTimestamp(),       // Время посещения
+      page: "index.html",                 // Страница
+      userAgent: navigator.userAgent,     // Браузер/устройство
+      referrer: document.referrer         // Откуда пришёл пользователь
+    });
+    console.log("Visit logged successfully");
+  } catch (err) {
+    console.error("Error logging visit:", err);
+  }
+}
+
+// Вызываем при загрузке страницы
+logVisit();
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
