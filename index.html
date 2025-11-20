@@ -66,12 +66,19 @@ const authMsg = document.getElementById("auth-msg");
 const statsDiv = document.getElementById("stats");
 const chartCanvas = document.getElementById("scoreChart");
 
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 // Регистрация
 registerBtn.addEventListener("click", async () => {
   const email = emailInput.value;
   const password = passwordInput.value;
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    // Создаём пустой документ в results/UID
+    await setDoc(doc(db, "results", uid), { email: email });
+
     authMsg.innerText = "Регистрация успешна!";
   } catch (err) {
     authMsg.innerText = "Ошибка: " + err.message;
