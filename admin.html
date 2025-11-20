@@ -1,89 +1,120 @@
-<button id="loadStatsBtn">Получить Стат Now</button>
-<table id="statsTable" border="1" style="margin-top:20px; border-collapse:collapse;">
-</table>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Admin – Сводная статистика</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; line-height: 1.6; }
+h1 { text-align: center; }
+button { padding: 10px 20px; margin: 10px 0; }
+table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+.high { background-color: #c8e6c9; }  /* зелёный для высоких баллов */
+.low { background-color: #ffcdd2; }   /* красный для низких */
+</style>
+</head>
+<body>
+
+<h1>Админская сводная статистика</h1>
+
+<button id="loadStatsBtn">Получить статистику</button>
+
+<div id="statsDiv"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import {
-    getFirestore, collection, getDocs
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "...",
-    authDomain: "...",
-    projectId: "...",
-    storageBucket: "...",
-    messagingSenderId: "...",
-    appId: "..."
-  };
+// ====== Firebase конфиг ======
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const testIds = ["test1", "test2", "test3", "test4", "test5"];
-  const maxPointsByTest = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
+const statsDiv = document.getElementById("statsDiv");
+const loadBtn = document.getElementById("loadStatsBtn");
 
-  document.getElementById("loadStatsBtn").onclick = loadStats;
+// Список тестов и макс. баллы
+const testIds = ["test1","test2","test3","test4","test5"];
+const maxPointsByTest = { test1:3, test2:3, test3:5, test4:3, test5:5 };
 
-  async function loadStats() {
-    const table = document.getElementById("statsTable");
-    table.innerHTML = "<tr><th>Email / UID</th>" +
-      testIds.map(t => `<th>${t}</th>`).join("") +
-      "<th>Total</th></tr>";
+loadBtn.addEventListener("click", async () => {
+  statsDiv.innerHTML = "Загрузка…";
 
-    // 1. Получаем список всех пользователей в results
+  try {
     const resultsCol = collection(db, "results");
-    const resultsSnapshot = await getDocs(resultsCol);
+    const usersSnapshot = await getDocs(resultsCol);
 
-    // Если пусто — ошибка
-    if (resultsSnapshot.empty) {
-      table.innerHTML += "<tr><td colspan='7'>Нет данных</td></tr>";
+    if (usersSnapshot.empty) {
+      statsDiv.innerHTML = "Нет пользователей.";
       return;
     }
 
-    // 2. Для каждого UID получаем тесты
-    for (let docSnap of resultsSnapshot.docs) {
-      const uid = docSnap.id;
+    const usersData = [];
 
-      let rowScores = {};
-      let totalScore = 0;
-      let totalMax = 0;
+    for (let userDoc of usersSnapshot.docs) {
+      const uid = userDoc.id;
 
+      let userRow = { uid, totalScore: 0, totalMax: 0, tests: {} };
+
+      // Перебор тестов
       for (let testId of testIds) {
         const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
         const attemptsSnapshot = await getDocs(attemptsCol);
 
-        let lastScore = 0;
-
+        let lastScore = 0; // по умолчанию 0, если попыток нет
         if (!attemptsSnapshot.empty) {
-          let arr = attemptsSnapshot.docs.map(d => {
+          const attemptsArray = attemptsSnapshot.docs.map(d => {
             const data = d.data();
             return {
               score: data.score ?? 0,
               date: data.date?.toDate ? data.date.toDate() : new Date(0)
             };
           });
-
-          // сортировка
-          arr.sort((a, b) => a.date - b.date);
-
-          lastScore = arr[arr.length - 1].score;
+          attemptsArray.sort((a,b) => a.date - b.date);
+          lastScore = attemptsArray[attemptsArray.length - 1].score;
         }
 
-        rowScores[testId] = lastScore;
-        totalScore += lastScore;
-        totalMax += maxPointsByTest[testId];
+        userRow.tests[testId] = lastScore;
+        userRow.totalScore += lastScore;
+        userRow.totalMax += maxPointsByTest[testId];
       }
 
-      // 3. Добавляем строку в таблицу
-      const tr = document.createElement("tr");
-
-      tr.innerHTML =
-        `<td>${uid}</td>` +
-        testIds.map(t => `<td>${rowScores[t]} / ${maxPointsByTest[t]}</td>`).join("") +
-        `<td>${totalScore} / ${totalMax}</td>`;
-
-      table.appendChild(tr);
+      usersData.push(userRow);
     }
+
+    // Сортируем по Total по убыванию
+    usersData.sort((a,b) => b.totalScore - a.totalScore);
+
+    // --- Построение таблицы ---
+    let html = "<table><tr><th>Email / UID</th>";
+    testIds.forEach(t => html += `<th>${t}</th>`);
+    html += "<th>Total</th></tr>";
+
+    usersData.forEach(user => {
+      html += `<tr><td>${user.uid}</td>`;
+      testIds.forEach(t => {
+        const score = user.tests[t];
+        const max = maxPointsByTest[t];
+        const perc = (score/max)*100;
+        const cls = perc >= 80 ? 'high' : (perc <= 50 ? 'low' : '');
+        html += `<td class="${cls}">${score} / ${max}</td>`;
+      });
+      html += `<td>${user.totalScore} / ${user.totalMax}</td></tr>`;
+    });
+
+    html += "</table>";
+    statsDiv.innerHTML = html;
+
+  } catch (err) {
+    statsDiv.innerHTML = "Ошибка при загрузке: " + err.message;
   }
+});
 </script>
+
+</body>
+</html>
