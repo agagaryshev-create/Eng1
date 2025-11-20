@@ -1,108 +1,145 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Admin Panel – English OGE Tests</title>
-<style>
-body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; }
-button { padding: 8px 12px; margin: 5px; }
-table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-th, td { border: 1px solid #777; padding: 6px; text-align: center; }
-#diagnostics { margin-top: 20px; white-space: pre-wrap; font-family: monospace; background: #f9f9f9; padding: 10px; }
-</style>
+  <meta charset="UTF-8">
+  <title>Admin Stats</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #eee; }
+    button { padding: 10px 20px; margin-right: 10px; }
+  </style>
 </head>
 <body>
 
-<h1>Admin Panel – English OGE Tests</h1>
-<button id="showStatsBtn">Показать статистику</button>
-<button id="showDiagBtn">Показать диагностику</button>
+<h1>Админка</h1>
+<button id="loadBtn">Показать статистику</button>
+<button id="diagBtn">Показать диагностику</button>
 
-<div id="stats"></div>
-<div id="diagnostics"></div>
+<div id="output"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import {
+    getFirestore, collection, getDocs,
+    doc, listCollections
+  } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ====== Настройка Firebase ======
-const firebaseConfig = {
-  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
-  authDomain: "engtestoge.firebaseapp.com",
-  projectId: "engtestoge"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+    authDomain: "engtestoge.firebaseapp.com",
+    projectId: "engtestoge"
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-const testIds = ["test1","test2","test3","test4","test5"];
-const maxPoints = { test1:3, test2:3, test3:5, test4:3, test5:5 };
+  const testIds = ["test1", "test2", "test3", "test4", "test5"];
+  const maxPoints = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
 
-const statsDiv = document.getElementById("stats");
-const diagDiv = document.getElementById("diagnostics");
+  document.getElementById("loadBtn").onclick = loadStats;
+  document.getElementById("diagBtn").onclick = runDiag;
 
-// --- Показать статистику ---
-document.getElementById("showStatsBtn").addEventListener("click", async () => {
-  statsDiv.innerHTML = "Загрузка...";
-  const usersSnap = await getDocs(collection(db, "results"));
-  let rows = [];
+  // -------------------------------
+  // 📌 Функция: Загрузка статистики
+  // -------------------------------
+  async function loadStats() {
+    const output = document.getElementById("output");
+    output.innerHTML = "Загрузка...";
 
-  for (const userDoc of usersSnap.docs) {
-    const uid = userDoc.id;
-    let totalEarned = 0, totalMax = 0;
-    let row = { uid };
+    const resultCol = collection(db, "results");
+    const resultSnap = await getDocs(resultCol);
 
-    for (const test of testIds) {
-      const attemptsSnap = await getDocs(collection(db, "results", uid, `${test}_attempts`));
-      let best = 0;
-      attemptsSnap.forEach(a => {
-        const pts = a.data().score || 0;
-        if (pts > best) best = pts;
-      });
-      row[test] = `${best} / ${maxPoints[test]}`;
-      totalEarned += best;
-      totalMax += maxPoints[test];
+    let allUIDs = new Set();
+
+    // 1️⃣ UID из документов results/
+    resultSnap.forEach(doc => allUIDs.add(doc.id));
+
+    // 2️⃣ Поиск UID, которые существуют только как подколлекции
+    for (let uidDoc of resultSnap.docs) {
+      const subcols = await listCollections(uidDoc.ref);
+      if (subcols.length > 0) allUIDs.add(uidDoc.id);
     }
 
-    row.total = `${totalEarned} / ${totalMax}`;
-    rows.push(row);
-  }
+    // 3️⃣ Важное нововведение: поиск UID через все подколлекции testX_attempts
+    for (let testId of testIds) {
+      const sub = collection(db, `results`);
+      const docs = await getDocs(sub);
 
-  renderStatsTable(rows);
-});
-
-function renderStatsTable(rows) {
-  let html = "<table><thead><tr><th>Email / UID</th>";
-  testIds.forEach(t => { html += `<th>${t}</th>` });
-  html += "<th>Total</th></tr></thead><tbody>";
-
-  rows.forEach(r => {
-    html += `<tr><td>${r.uid}</td>`;
-    testIds.forEach(t => { html += `<td>${r[t]}</td>` });
-    html += `<td>${r.total}</td></tr>`;
-  });
-
-  html += "</tbody></table>";
-  statsDiv.innerHTML = html;
-}
-
-// --- Показать диагностику ---
-document.getElementById("showDiagBtn").addEventListener("click", async () => {
-  diagDiv.innerHTML = "Загрузка диагностики...";
-  const usersSnap = await getDocs(collection(db, "results"));
-  let diagText = `Всего UID в results: ${usersSnap.size}\n\n`;
-
-  for (const userDoc of usersSnap.docs) {
-    const uid = userDoc.id;
-    diagText += `UID: ${uid}\n`;
-    for (const test of testIds) {
-      const attemptsSnap = await getDocs(collection(db, "results", uid, `${test}_attempts`));
-      diagText += `  ${test}: ${attemptsSnap.size} попыток\n`;
+      for (let uidDoc of docs.docs) {
+        const attemptsCol = collection(db, `results/${uidDoc.id}/${testId}_attempts`);
+        const attemptsSnap = await getDocs(attemptsCol);
+        if (!attemptsSnap.empty) {
+          allUIDs.add(uidDoc.id);
+        }
+      }
     }
-    diagText += "\n";
+
+    // 📌 Теперь в allUIDs попадёт даже UID без документа, но с попытками
+    const uidList = Array.from(allUIDs);
+
+    let html = `<table><tr><th>Email / UID</th>`;
+    testIds.forEach(t => html += `<th>${t}</th>`);
+    html += `<th>Total</th></tr>`;
+
+    for (let uid of uidList) {
+      html += `<tr><td>${uid}</td>`;
+
+      let total = 0;
+      let totalMax = 0;
+
+      for (let testId of testIds) {
+        const attemptsCol = collection(db, `results/${uid}/${testId}_attempts`);
+        const snap = await getDocs(attemptsCol);
+
+        if (snap.empty) {
+          html += `<td>–</td>`;
+          continue;
+        }
+
+        let lastScore = 0;
+        snap.forEach(doc => {
+          const s = doc.data().score ?? 0;
+          if (s > lastScore) lastScore = s;
+        });
+
+        total += lastScore;
+        totalMax += maxPoints[testId];
+
+        html += `<td>${lastScore} / ${maxPoints[testId]}</td>`;
+      }
+
+      html += `<td>${total} / ${totalMax}</td></tr>`;
+    }
+
+    html += `</table>`;
+    output.innerHTML = html;
   }
 
-  diagDiv.innerText = diagText;
-});
+  // ---------------------------
+  // 📌 Диагностика
+  // ---------------------------
+  async function runDiag() {
+    const output = document.getElementById("output");
+    let html = "<h3>Диагностика</h3>";
+
+    const resSnap = await getDocs(collection(db, "results"));
+
+    html += `Всего найдено UID в results: ${resSnap.size}<br><br>`;
+
+    for (let d of resSnap.docs) {
+      html += `<b>${d.id}</b><br>`;
+      const subcols = await listCollections(d.ref);
+      for (let col of subcols) {
+        html += `&nbsp;&nbsp;${col.id}<br>`;
+      }
+      html += `<br>`;
+    }
+
+    output.innerHTML = html;
+  }
+
 </script>
 
 </body>
