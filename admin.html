@@ -1,21 +1,7 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin Stats</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #eee; }
-    button { padding: 10px 20px; margin-right: 10px; }
-  </style>
-</head>
-<body>
-
 <h1>Админка</h1>
 <button id="loadBtn">Показать статистику</button>
 <button id="diagBtn">Показать диагностику</button>
+<button id="visitsBtn">Статистика посещений</button>
 
 <div id="output"></div>
 
@@ -38,6 +24,7 @@ const maxPoints = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
 
 document.getElementById("loadBtn").onclick = loadStats;
 document.getElementById("diagBtn").onclick = runDiag;
+document.getElementById("visitsBtn").onclick = showVisits;
 
 // -------------------------------
 // 📌 Функция: Загрузка статистики
@@ -111,7 +98,24 @@ async function runDiag() {
 
   output.innerHTML = html;
 }
-</script>
 
-</body>
-</html>
+// ---------------------------
+// 📌 Статистика посещений
+// ---------------------------
+async function showVisits() {
+  const output = document.getElementById("output");
+  output.innerHTML = "Загрузка посещений...";
+
+  const visitsSnap = await getDocs(collection(db, "visits"));
+  let html = `<h3>Статистика посещений</h3>`;
+  html += `Всего посещений: ${visitsSnap.size}<br><br>`;
+
+  visitsSnap.forEach(doc => {
+    const data = doc.data();
+    const ts = data.timestamp?.toDate ? data.timestamp.toDate() : "неизвестно";
+    html += `IP/User: ${data.ip || "неизвестно"}, Время: ${ts}<br>`;
+  });
+
+  output.innerHTML = html;
+}
+</script>
