@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple TTS Example</title>
+</head>
+<body>
+  <h1>Text-to-Speech Demo</h1>
+  <p>Фраза: <strong>I love coding</strong></p>
+  <button id="speakBtn">🔊 Озвучить</button>
+
+  <script>
+    const button = document.getElementById("speakBtn");
+
+    button.addEventListener("click", () => {
+      const text = "I love coding";
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US"; // язык английский
+      speechSynthesis.speak(utterance);
+    });
+  </script>
+</body>
+</html>
