@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Kids English (2 класс)</title>
+<style>
+body {
+  font-family: Comic Sans MS, Arial, sans-serif;
+  background: #F3F7FF;
+  margin: 20px;
+  text-align: center;
+}
+
+h1 {
+  color: #3366CC;
+  font-size: 32px;
+}
+
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.card {
+  width: 200px;
+  padding: 20px;
+  background: white;
+  border-radius: 15px;
+  border: 3px solid #CCE0FF;
+  text-decoration: none;
+  color: black;
+  font-size: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+.card span {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>🎈 English for Kids – 2 класс</h1>
+<p style="font-size: 18px; color: #444;">
+Учимся английскому весело и просто! Выбери раздел ниже 👇
+</p>
+
+<div class="menu">
+  <a class="card" href="kids_animals.html">
+    <span>🐶</span> Animals
+  </a>
+  <a class="card" href="kids_colours.html">
+    <span>🎨</span> Colours
+  </a>
+  <a class="card" href="kids_food.html">
+    <span>🍎</span> Food
+  </a>
+  <a class="card" href="kids_family.html">
+    <span>👪</span> Family
+  </a>
+  <a class="card" href="kids_school.html">
+    <span>🏫</span> School
+  </a>
+  <a class="card" href="kids_games.html">
+    <span>🎮</span> Games
+  </a>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from 
+"https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Логируем посещение
+async function logVisitKids() {
+  try {
+    await addDoc(collection(db, "visits_kids"), {
+      timestamp: serverTimestamp(),
+      page: "kids.html",
+      userAgent: navigator.userAgent
+    });
+  } catch (e) {
+    console.error("Error logging visit:", e);
+  }
+}
+
+logVisitKids();
+</script>
+
+</body>
+</html>
