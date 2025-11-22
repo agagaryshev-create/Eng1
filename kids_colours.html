@@ -1,135 +1,132 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kids Colours Test</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #fff9f0;
-            text-align: center;
-            padding: 20px;
-        }
-        h1 {
-            color: #ff6f61;
-        }
-        .question {
-            margin: 20px 0;
-        }
-        select {
-            padding: 8px;
-            font-size: 16px;
-            width: 150px;
-            border-radius: 5px;
-        }
-        button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #ffcc00;
-            border: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background-color: #ffdd33;
-        }
-        .result {
-            font-weight: bold;
-            margin-top: 20px;
-            font-size: 18px;
-        }
-        .back {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 8px 15px;
-            background-color: #ffcc80;
-            border-radius: 5px;
-            text-decoration: none;
-            color: #333;
-            font-size: 16px;
-        }
-        .color-square {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-            margin-right: 5px;
-            border: 1px solid #333;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Colours Test</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fff9f0;
+    text-align: center;
+    padding: 20px;
+}
+h1 { color: #ff6f61; }
+.question { margin: 20px 0; }
+select {
+    padding: 8px;
+    font-size: 16px;
+    width: 150px;
+    border-radius: 5px;
+}
+button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #ffcc00;
+    border: none;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+button:hover { background-color: #ffdd33; }
+.result {
+    font-weight: bold;
+    margin-top: 20px;
+    font-size: 18px;
+}
+.back {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 8px 15px;
+    background-color: #ffcc80;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+}
+.color-square {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+    border: 1px solid #333;
+}
+</style>
 </head>
 <body>
-    <h1>Test: Colours in English</h1>
+<h1>Test: Colours in English</h1>
 
-    <div id="quiz-container"></div>
+<div id="quiz-container"></div>
 
-    <button onclick="checkAnswers()">Check Answers</button>
+<button onclick="checkAnswers()">Check Answers</button>
 
-    <div class="result" id="result"></div>
+<div class="result" id="result"></div>
 
-    <a href="kids.html" class="back">← Back to main page</a>
+<a href="kids.html" class="back">← Back to main page</a>
 
-    <script>
-        const questions = [
-            { colorName: "Red", colorCode: "#ff0000", options: ["Red","Blue","Green","Yellow"] },
-            { colorName: "Blue", colorCode: "#0000ff", options: ["Blue","Red","Purple","Orange"] },
-            { colorName: "Green", colorCode: "#00ff00", options: ["Green","Blue","Yellow","Pink"] },
-            { colorName: "Yellow", colorCode: "#ffff00", options: ["Yellow","Green","Orange","Purple"] },
-            { colorName: "Purple", colorCode: "#800080", options: ["Purple","Red","Blue","Green"] },
-            { colorName: "Orange", colorCode: "#ffa500", options: ["Orange","Yellow","Pink","Blue"] },
-            { colorName: "Pink", colorCode: "#ff69b4", options: ["Pink","Red","Green","Purple"] },
-            { colorName: "Brown", colorCode: "#8b4513", options: ["Brown","Orange","Blue","Yellow"] },
-            { colorName: "Gray", colorCode: "#808080", options: ["Gray","Black","White","Blue"] },
-            { colorName: "Black", colorCode: "#000000", options: ["Black","Gray","Red","Green"] },
-            { colorName: "White", colorCode: "#ffffff", options: ["White","Black","Pink","Yellow"] }
-        ];
+<script>
+const questions = [
+    { colorName: "Red", colorCode: "#ff0000", options: ["Red","Blue","Green","Yellow"] },
+    { colorName: "Blue", colorCode: "#0000ff", options: ["Blue","Red","Purple","Orange"] },
+    { colorName: "Green", colorCode: "#00ff00", options: ["Green","Blue","Yellow","Pink"] },
+    { colorName: "Yellow", colorCode: "#ffff00", options: ["Yellow","Green","Orange","Purple"] },
+    { colorName: "Purple", colorCode: "#800080", options: ["Purple","Red","Blue","Green"] },
+    { colorName: "Orange", colorCode: "#ffa500", options: ["Orange","Yellow","Pink","Blue"] },
+    { colorName: "Pink", colorCode: "#ff69b4", options: ["Pink","Red","Green","Purple"] },
+    { colorName: "Brown", colorCode: "#8b4513", options: ["Brown","Orange","Blue","Yellow"] },
+    { colorName: "Gray", colorCode: "#808080", options: ["Gray","Black","White","Blue"] },
+    { colorName: "Black", colorCode: "#000000", options: ["Black","Gray","Red","Green"] },
+    { colorName: "White", colorCode: "#ffffff", options: ["White","Black","Pink","Yellow"] }
+];
 
-        const container = document.getElementById("quiz-container");
+// Функция для перемешивания массива
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
 
-        // Создание вопросов
-        questions.forEach((q, index) => {
-            const div = document.createElement("div");
-            div.className = "question";
-            div.innerHTML = `
-                <p>${index + 1}. What colour is this? 
-                <span class="color-square" style="background-color:${q.colorCode}"></span></p>
-                <select id="q${index}"></select>
-            `;
-            container.appendChild(div);
+const container = document.getElementById("quiz-container");
 
-            const select = div.querySelector("select");
-            select.innerHTML = `<option value="">Select</option>`;
-            q.options.forEach(opt => {
-                const optionEl = document.createElement("option");
-                optionEl.value = opt;
-                optionEl.textContent = opt;
-                select.appendChild(optionEl);
-            });
-        });
+// Создание вопросов
+questions.forEach((q, index) => {
+    const div = document.createElement("div");
+    div.className = "question";
+    div.innerHTML = `
+        <p>${index + 1}. What colour is this? 
+        <span class="color-square" style="background-color:${q.colorCode}"></span></p>
+        <select id="q${index}"></select>
+    `;
+    container.appendChild(div);
 
-        function checkAnswers() {
-            let score = 0;
-            questions.forEach((q, index) => {
-                const select = document.getElementById(`q${index}`);
-                const userAnswer = select.value;
+    const select = div.querySelector("select");
+    select.innerHTML = `<option value="">Select</option>`;
+    shuffle(q.options).forEach(opt => {
+        const optionEl = document.createElement("option");
+        optionEl.value = opt;
+        optionEl.textContent = opt;
+        select.appendChild(optionEl);
+    });
+});
 
-                // Сброс цвета
-                select.style.backgroundColor = "";
+function checkAnswers() {
+    let score = 0;
+    questions.forEach((q, index) => {
+        const select = document.getElementById(`q${index}`);
+        const userAnswer = select.value;
 
-                if (userAnswer === q.colorName) {
-                    score++;
-                    select.style.backgroundColor = "#A5D6A7"; // зелёный
-                } else if(userAnswer !== "") {
-                    select.style.backgroundColor = "#EF9A9A"; // красный
-                }
-            });
+        // Сброс цвета
+        select.style.backgroundColor = "";
 
-            document.getElementById("result").innerText = 
-                `You got ${score} out of ${questions.length} correct!`;
+        if (userAnswer === q.colorName) {
+            score++;
+            select.style.backgroundColor = "#A5D6A7"; // зелёный
+        } else if(userAnswer !== "") {
+            select.style.backgroundColor = "#EF9A9A"; // красный
         }
-    </script>
+    });
+
+    document.getElementById("result").innerText = 
+        `You got ${score} out of ${questions.length} correct!`;
+}
+</script>
 </body>
 </html>
