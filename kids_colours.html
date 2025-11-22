@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Colours Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff9f0;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff6f61;
+        }
+        .question {
+            margin: 20px 0;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #ffcc00;
+            border: none;
+            border-radius: 5px;
+        }
+        .result {
+            font-weight: bold;
+            margin-top: 20px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test: Colours in English</h1>
+
+    <div class="question">
+        <p>1. What colour is this? <span style="color:red;">■</span></p>
+        <select id="q1">
+            <option value="">Select</option>
+            <option value="Red">Red</option>
+            <option value="Blue">Blue</option>
+            <option value="Green">Green</option>
+        </select>
+    </div>
+
+    <div class="question">
+        <p>2. What colour is this? <span style="color:blue;">■</span></p>
+        <select id="q2">
+            <option value="">Select</option>
+            <option value="Red">Red</option>
+            <option value="Blue">Blue</option>
+            <option value="Yellow">Yellow</option>
+        </select>
+    </div>
+
+    <div class="question">
+        <p>3. What colour is this? <span style="color:green;">■</span></p>
+        <select id="q3">
+            <option value="">Select</option>
+            <option value="Green">Green</option>
+            <option value="Purple">Purple</option>
+            <option value="Orange">Orange</option>
+        </select>
+    </div>
+
+    <button onclick="checkAnswers()">Check Answers</button>
+
+    <div class="result" id="result"></div>
+
+    <script>
+        function checkAnswers() {
+            let score = 0;
+
+            const answers = {
+                q1: "Red",
+                q2: "Blue",
+                q3: "Green"
+            };
+
+            for (let q in answers) {
+                let userAnswer = document.getElementById(q).value;
+                if (userAnswer === answers[q]) {
+                    score++;
+                }
+            }
+
+            const totalQuestions = Object.keys(answers).length;
+            document.getElementById('result').innerText = 
+                `You got ${score} out of ${totalQuestions} correct!`;
+        }
+    </script>
+</body>
+</html>
