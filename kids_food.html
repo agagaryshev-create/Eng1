@@ -2,28 +2,27 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kids English – Food</title>
 <style>
 body {
   font-family: Comic Sans MS, Arial, sans-serif;
-  background: #FFF8F0;
+  background: #FFF9E6;
   margin: 0;
   padding: 20px;
   text-align: center;
 }
 
 h1 {
-  color: #FF6F61;
+  color: #FF7043;
 }
 
 #quiz-box {
   background: white;
   padding: 20px;
-  max-width: 650px;
+  max-width: 600px;
   margin: 20px auto;
   border-radius: 20px;
-  border: 3px solid #FFD7B5;
+  border: 3px solid #FFAB91;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
@@ -45,14 +44,13 @@ button.option {
   padding: 12px;
   font-size: 20px;
   border-radius: 10px;
-  border: 2px solid #FFA726;
-  background: #FFECB3;
+  border: 2px solid #FF7043;
+  background: #FFE0B2;
   cursor: pointer;
-  transition: background 0.3s;
 }
 
 button.option:hover {
-  background: #FFE082;
+  background: #FFD54F;
 }
 
 #result {
@@ -66,14 +64,14 @@ button.option:hover {
   padding: 12px 25px;
   font-size: 20px;
   border-radius: 10px;
-  background: #FFD54F;
-  border: 2px solid #F9A825;
+  background: #FFCC80;
+  border: 2px solid #FF8A65;
   cursor: pointer;
   display: none;
 }
 
 #restart:hover {
-  background: #FFEE58;
+  background: #FFB74D;
 }
 
 .back {
@@ -85,7 +83,7 @@ button.option:hover {
   text-decoration: none;
   color: #333;
   font-size: 18px;
-  border: 2px solid #FFA726;
+  border: 2px solid #FF7043;
 }
 </style>
 </head>
@@ -106,16 +104,16 @@ button.option:hover {
 
 <script>
 const questions = [
-  { word: "apple", img: "https://cdn-icons-png.flaticon.com/512/415/415733.png", options: ["apple","banana","orange","bread"] },
-  { word: "banana", img: "https://cdn-icons-png.flaticon.com/512/590/590685.png", options: ["banana","apple","bread","cheese"] },
-  { word: "bread", img: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png", options: ["bread","cheese","fish","apple"] },
-  { word: "cheese", img: "https://cdn-icons-png.flaticon.com/512/1046/1046775.png", options: ["cheese","bread","egg","banana"] },
-  { word: "fish", img: "https://cdn-icons-png.flaticon.com/512/616/616408.png", options: ["fish","meat","milk","apple"] },
-  { word: "egg", img: "https://cdn-icons-png.flaticon.com/512/1046/1046783.png", options: ["egg","banana","bread","cheese"] },
-  { word: "milk", img: "https://cdn-icons-png.flaticon.com/512/3081/3081441.png", options: ["milk","cheese","bread","fish"] },
-  { word: "meat", img: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png", options: ["meat","fish","egg","apple"] },
-  { word: "orange", img: "https://cdn-icons-png.flaticon.com/512/590/590688.png", options: ["orange","banana","apple","bread"] },
-  { word: "tomato", img: "https://cdn-icons-png.flaticon.com/512/1046/1046781.png", options: ["tomato","apple","cheese","fish"] }
+  { word: "apple", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/320px-Red_Apple.jpg", options: ["apple","banana","orange"] },
+  { word: "banana", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banana-Single.jpg/320px-Banana-Single.jpg", options: ["banana","apple","grapes"] },
+  { word: "bread", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Loaf_of_white_bread.jpg/320px-Loaf_of_white_bread.jpg", options: ["bread","cheese","milk"] },
+  { word: "cheese", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Cheddar_cheese.jpg/320px-Cheddar_cheese.jpg", options: ["cheese","bread","apple"] },
+  { word: "milk", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Milk_glass.jpg/320px-Milk_glass.jpg", options: ["milk","water","juice"] },
+  { word: "orange", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Orange-Fruit-Pieces.jpg/320px-Orange-Fruit-Pieces.jpg", options: ["orange","apple","banana"] },
+  { word: "grapes", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Table_grapes_on_white.jpg/320px-Table_grapes_on_white.jpg", options: ["grapes","banana","apple"] },
+  { word: "egg", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Chicken_egg_white_background.jpg/320px-Chicken_egg_white_background.jpg", options: ["egg","bread","cheese"] },
+  { word: "carrot", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Carrot_on_white_background.jpg/320px-Carrot_on_white_background.jpg", options: ["carrot","tomato","potato"] },
+  { word: "tomato", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Tomato_je.jpg/320px-Tomato_je.jpg", options: ["tomato","carrot","pepper"] }
 ];
 
 let current = 0;
@@ -126,7 +124,7 @@ shuffle(questions);
 
 function loadQuestion() {
   const q = questions[current];
-  document.getElementById("question").innerText = `Что это за еда? (${current+1}/10)`;
+  document.getElementById("question").innerText = `Что это за еда? (${current+1}/${questions.length})`;
   document.getElementById("image").src = q.img;
   document.getElementById("image").alt = q.word;
 
