@@ -13,9 +13,7 @@ body {
   text-align: center;
 }
 
-h1 {
-  color: #FFA726;
-}
+h1 { color: #FFA726; }
 
 #quiz-box {
   background: white;
@@ -51,15 +49,9 @@ button.option {
   transition: background 0.3s;
 }
 
-button.option:hover {
-  background: #FFE082;
-}
+button.option:hover { background: #FFE082; }
 
-#result {
-  font-size: 22px;
-  margin-top: 20px;
-  font-weight: bold;
-}
+#result { font-size: 22px; margin-top: 20px; font-weight: bold; }
 
 #restart {
   margin-top: 20px;
@@ -72,9 +64,7 @@ button.option:hover {
   display: none;
 }
 
-#restart:hover {
-  background: #FFEE58;
-}
+#restart:hover { background: #FFEE58; }
 
 .back {
   margin-top: 20px;
@@ -93,7 +83,6 @@ button.option:hover {
 
 <h1>🏫 School – English for Kids</h1>
 <p style="font-size:18px;">Выбери правильный ответ 👇</p>
-
 <a href="kids.html" class="back">← Назад к разделам</a>
 
 <div id="quiz-box">
@@ -105,59 +94,60 @@ button.option:hover {
 </div>
 
 <script>
-const questions = [
-  { word: "pencil", img: "https://cdn-icons-png.flaticon.com/512/1046/1046790.png", options: ["pencil","pen","book","eraser"] },
-  { word: "pen", img: "https://cdn-icons-png.flaticon.com/512/1046/1046791.png", options: ["pen","pencil","ruler","book"] },
-  { word: "book", img: "https://cdn-icons-png.flaticon.com/512/1046/1046792.png", options: ["book","notebook","pen","pencil"] },
-  { word: "eraser", img: "https://cdn-icons-png.flaticon.com/512/1046/1046793.png", options: ["eraser","pencil","pen","book"] },
-  { word: "notebook", img: "https://cdn-icons-png.flaticon.com/512/1046/1046794.png", options: ["notebook","book","pen","pencil"] },
-  { word: "ruler", img: "https://cdn-icons-png.flaticon.com/512/1046/1046795.png", options: ["ruler","pencil","pen","book"] },
-  { word: "backpack", img: "https://cdn-icons-png.flaticon.com/512/1046/1046796.png", options: ["backpack","book","pen","pencil"] },
-  { word: "scissors", img: "https://cdn-icons-png.flaticon.com/512/1046/1046797.png", options: ["scissors","pencil","pen","eraser"] },
-  { word: "paint", img: "https://cdn-icons-png.flaticon.com/512/1046/1046798.png", options: ["paint","pen","pencil","eraser"] },
-  { word: "clock", img: "https://cdn-icons-png.flaticon.com/512/1046/1046799.png", options: ["clock","pen","book","pencil"] }
+// Список всех PNG файлов для школьного квиза
+const allImages = [
+  "backpack.png","blackboard.png","book.png","chair.png","chalk.png",
+  "clock.png","desk.png","eraser.png","marker.png","notebook.png",
+  "pen.png","pencil.png","ruler.png","scissors.png"
 ];
 
+// Создание массива вопросов (рандом 10)
+function getRandomQuestions(arr, count=10){
+  const shuffled = arr.sort(()=>Math.random()-0.5);
+  return shuffled.slice(0,count).map(name=>{
+    const word = name.replace(".png","");
+    const options = [word];
+    while(options.length<4){
+      let opt = arr[Math.floor(Math.random()*arr.length)].replace(".png","");
+      if(!options.includes(opt)) options.push(opt);
+    }
+    return { word, img: "images/school/"+name, options: options.sort(()=>Math.random()-0.5) };
+  });
+}
+
+let questions = getRandomQuestions(allImages);
 let current = 0;
 let score = 0;
 
-function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
-shuffle(questions);
-
-function loadQuestion() {
+function loadQuestion(){
   const q = questions[current];
-  document.getElementById("question").innerText = `Что это? (${current+1}/10)`;
+  document.getElementById("question").innerText = `Что это? (${current+1}/${questions.length})`;
   document.getElementById("image").src = q.img;
   document.getElementById("image").alt = q.word;
 
   const optBox = document.getElementById("options");
   optBox.innerHTML = "";
-
-  shuffle(q.options).forEach(opt => {
+  q.options.forEach(opt=>{
     const btn = document.createElement("button");
     btn.className = "option";
     btn.innerText = opt;
-    btn.onclick = () => checkAnswer(btn,opt===q.word);
+    btn.onclick = ()=>checkAnswer(btn,opt===q.word);
     optBox.appendChild(btn);
   });
 
-  optBox.style.display = "flex";
-  document.getElementById("image").style.display = "block";
-  document.getElementById("question").style.display = "block";
-  document.getElementById("result").innerText = "";
-  document.getElementById("restart").style.display = "none";
+  document.getElementById("options").style.display="flex";
+  document.getElementById("image").style.display="block";
+  document.getElementById("question").style.display="block";
+  document.getElementById("result").innerText="";
+  document.getElementById("restart").style.display="none";
 }
 
-function checkAnswer(selectedBtn, correct){
+function checkAnswer(btn, correct){
   const buttons = document.querySelectorAll("#options .option");
-  buttons.forEach(btn=>{
-    btn.disabled=true;
-    if(btn.innerText===questions[current].word) btn.style.backgroundColor="#A5D6A7";
-  });
-  if(!correct) selectedBtn.style.backgroundColor="#EF9A9A"; else score++;
-
+  buttons.forEach(b=>{ b.disabled=true; if(b.innerText===questions[current].word) b.style.backgroundColor="#A5D6A7"; });
+  if(!correct) btn.style.backgroundColor="#EF9A9A"; else score++;
   current++;
-  setTimeout(()=>{ if(current<questions.length) loadQuestion(); else showResult(); },1000);
+  setTimeout(()=>current<questions.length?loadQuestion():showResult(),1000);
 }
 
 function showResult(){
@@ -169,7 +159,8 @@ function showResult(){
 }
 
 document.getElementById("restart").onclick=()=>{
-  current=0; score=0; shuffle(questions); loadQuestion();
+  questions = getRandomQuestions(allImages);
+  current=0; score=0; loadQuestion();
 };
 
 loadQuestion();

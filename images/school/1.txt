@@ -1,0 +1,15 @@
+1.txt
+backpack.png
+blackboard.png
+book.png
+chair.png
+chalk.png
+clock.png
+desk.png
+eraser.png
+marker.png
+notebook.png
+pen.png
+pencil.png
+ruler.png
+scissors.png
