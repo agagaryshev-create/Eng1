@@ -11,11 +11,7 @@ body {
   padding: 20px;
   text-align: center;
 }
-
-h1 {
-  color: #FF7043;
-}
-
+h1 { color: #FF7043; }
 #quiz-box {
   background: white;
   padding: 20px;
@@ -25,21 +21,18 @@ h1 {
   border: 3px solid #FFAB91;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-
 img {
   width: 200px;
   height: 200px;
   object-fit: contain;
   margin: 10px 0;
 }
-
 .options {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 15px;
 }
-
 button.option {
   padding: 12px;
   font-size: 20px;
@@ -48,17 +41,12 @@ button.option {
   background: #FFE0B2;
   cursor: pointer;
 }
-
-button.option:hover {
-  background: #FFD54F;
-}
-
+button.option:hover { background: #FFD54F; }
 #result {
   font-size: 22px;
   margin-top: 20px;
   font-weight: bold;
 }
-
 #restart {
   margin-top: 20px;
   padding: 12px 25px;
@@ -69,11 +57,7 @@ button.option:hover {
   cursor: pointer;
   display: none;
 }
-
-#restart:hover {
-  background: #FFB74D;
-}
-
+#restart:hover { background: #FFB74D; }
 .back {
   margin-top: 20px;
   display: inline-block;
@@ -91,7 +75,6 @@ button.option:hover {
 
 <h1>🍎 Food – English for Kids</h1>
 <p style="font-size:18px;">Выбери правильный ответ 👇</p>
-
 <a href="kids.html" class="back">← Назад к разделам</a>
 
 <div id="quiz-box">
@@ -104,16 +87,16 @@ button.option:hover {
 
 <script>
 const questions = [
-  { word: "apple", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/320px-Red_Apple.jpg", options: ["apple","banana","orange"] },
-  { word: "banana", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banana-Single.jpg/320px-Banana-Single.jpg", options: ["banana","apple","grapes"] },
-  { word: "bread", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Loaf_of_white_bread.jpg/320px-Loaf_of_white_bread.jpg", options: ["bread","cheese","milk"] },
-  { word: "cheese", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Cheddar_cheese.jpg/320px-Cheddar_cheese.jpg", options: ["cheese","bread","apple"] },
-  { word: "milk", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Milk_glass.jpg/320px-Milk_glass.jpg", options: ["milk","water","juice"] },
-  { word: "orange", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Orange-Fruit-Pieces.jpg/320px-Orange-Fruit-Pieces.jpg", options: ["orange","apple","banana"] },
-  { word: "grapes", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Table_grapes_on_white.jpg/320px-Table_grapes_on_white.jpg", options: ["grapes","banana","apple"] },
-  { word: "egg", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Chicken_egg_white_background.jpg/320px-Chicken_egg_white_background.jpg", options: ["egg","bread","cheese"] },
-  { word: "carrot", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Carrot_on_white_background.jpg/320px-Carrot_on_white_background.jpg", options: ["carrot","tomato","potato"] },
-  { word: "tomato", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Tomato_je.jpg/320px-Tomato_je.jpg", options: ["tomato","carrot","pepper"] }
+  { word: "apple", img: "images/food/apple.png", options: ["apple","banana","orange"] },
+  { word: "banana", img: "images/food/banana.png", options: ["banana","apple","grapes"] },
+  { word: "bread", img: "images/food/bread.png", options: ["bread","cheese","milk"] },
+  { word: "cheese", img: "images/food/cheese.png", options: ["cheese","bread","apple"] },
+  { word: "milk", img: "images/food/milk.png", options: ["milk","water","juice"] },
+  { word: "orange", img: "images/food/orange.png", options: ["orange","apple","banana"] },
+  { word: "grapes", img: "images/food/grapes.png", options: ["grapes","banana","apple"] },
+  { word: "egg", img: "images/food/eggs.png", options: ["egg","bread","cheese"] },
+  { word: "carrot", img: "images/food/carrot.png", options: ["carrot","tomato","potato"] },
+  { word: "tomato", img: "images/food/tomato.png", options: ["tomato","carrot","pepper"] }
 ];
 
 let current = 0;
@@ -130,7 +113,6 @@ function loadQuestion() {
 
   const optBox = document.getElementById("options");
   optBox.innerHTML = "";
-
   shuffle(q.options).forEach(opt => {
     const btn = document.createElement("button");
     btn.className = "option";
