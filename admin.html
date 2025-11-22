@@ -1,7 +1,9 @@
 <h1>Админка</h1>
+
 <button id="loadBtn">Показать статистику</button>
 <button id="diagBtn">Показать диагностику</button>
 <button id="visitsBtn">Статистика посещений</button>
+<button id="visitsDetailedBtn">Подробная статистика посещений</button>
 
 <div id="output"></div>
 
@@ -22,13 +24,15 @@ const db = getFirestore(app);
 const testIds = ["test1","test2","test3","test4","test5"];
 const maxPoints = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
 
+// кнопки
 document.getElementById("loadBtn").onclick = loadStats;
 document.getElementById("diagBtn").onclick = runDiag;
 document.getElementById("visitsBtn").onclick = showVisits;
+document.getElementById("visitsDetailedBtn").onclick = showVisitsDetailed;
 
-// -------------------------------
-// 📌 Функция: Загрузка статистики
-// -------------------------------
+// =============================================================
+// 📌 Функция: Загрузка статистики тестов (ТАБЛИЦА)
+// =============================================================
 async function loadStats() {
   const output = document.getElementById("output");
   output.innerHTML = "Загрузка...";
@@ -38,7 +42,9 @@ async function loadStats() {
 
   const uidList = resultSnap.docs.map(d => d.id);
 
-  let html = `<table><tr><th>Email / UID</th>`;
+  let html = `<h3>Статистика тестов</h3>`;
+  html += `<table border="1" cellpadding="6"><tr><th>Email / UID</th>`;
+
   testIds.forEach(t => html += `<th>${t}</th>`);
   html += `<th>Total</th></tr>`;
 
@@ -76,9 +82,9 @@ async function loadStats() {
   output.innerHTML = html;
 }
 
-// ---------------------------
+// =============================================================
 // 📌 Диагностика
-// ---------------------------
+// =============================================================
 async function runDiag() {
   const output = document.getElementById("output");
   const resultSnap = await getDocs(collection(db, "results"));
@@ -99,23 +105,75 @@ async function runDiag() {
   output.innerHTML = html;
 }
 
-// ---------------------------
-// 📌 Статистика посещений
-// ---------------------------
+// =============================================================
+// 📌 Сводная статистика посещений (по дням)
+// =============================================================
 async function showVisits() {
   const output = document.getElementById("output");
   output.innerHTML = "Загрузка посещений...";
 
   const visitsSnap = await getDocs(collection(db, "visits"));
-  let html = `<h3>Статистика посещений</h3>`;
-  html += `Всего посещений: ${visitsSnap.size}<br><br>`;
+
+  const days = {};  // день → количество посещений
 
   visitsSnap.forEach(doc => {
     const data = doc.data();
-    const ts = data.timestamp?.toDate ? data.timestamp.toDate() : "неизвестно";
-    html += `IP/User: ${data.ip || "неизвестно"}, Время: ${ts}<br>`;
+    const ts = data.timestamp?.toDate ? data.timestamp.toDate() : null;
+    if (!ts) return;
+
+    const day = ts.toISOString().split("T")[0];
+    days[day] = (days[day] || 0) + 1;
   });
 
+  let html = `<h3>Сводная статистика посещений по дням</h3>`;
+  html += `<table border="1" cellpadding="6">
+           <tr><th>Дата</th><th>Количество посещений</th></tr>`;
+
+  Object.keys(days).sort().forEach(day => {
+    html += `<tr><td>${day}</td><td>${days[day]}</td></tr>`;
+  });
+
+  html += `</table>`;
   output.innerHTML = html;
 }
+
+// =============================================================
+// 📌 Подробная статистика посещений (каждая запись)
+// =============================================================
+async function showVisitsDetailed() {
+  const output = document.getElementById("output");
+  output.innerHTML = "Загрузка подробных данных...";
+
+  const visitsSnap = await getDocs(collection(db, "visits"));
+
+  const rows = [];
+
+  visitsSnap.forEach(doc => {
+    const data = doc.data();
+    const ts = data.timestamp?.toDate ? data.timestamp.toDate() : null;
+    if (!ts) return;
+
+    rows.push({
+      ip: data.ip || "неизвестно",
+      ts,
+      day: ts.toISOString().split("T")[0],
+      time: ts.toTimeString().split(" ")[0]
+    });
+  });
+
+  // сортировка по времени
+  rows.sort((a, b) => a.ts - b.ts);
+
+  let html = `<h3>Подробная статистика посещений</h3>`;
+  html += `<table border="1" cellpadding="6">
+           <tr><th>IP</th><th>Дата</th><th>Время</th></tr>`;
+
+  rows.forEach(r => {
+    html += `<tr><td>${r.ip}</td><td>${r.day}</td><td>${r.time}</td></tr>`;
+  });
+
+  html += `</table>`;
+  output.innerHTML = html;
+}
+
 </script>
