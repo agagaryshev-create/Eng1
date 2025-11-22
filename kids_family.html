@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kids English – Family</title>
 <style>
 body {
@@ -98,7 +99,9 @@ const questions = [
 let current = 0;
 let score = 0;
 
+// Функция перемешивания массива
 function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
 shuffle(questions);
 
 function loadQuestion() {
