@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids English – Games</title>
+<style>
+body {
+  font-family: Comic Sans MS, Arial, sans-serif;
+  background: #F0FFF0;
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  color: #66BB6A;
+}
+
+#quiz-box {
+  background: white;
+  padding: 20px;
+  max-width: 650px;
+  margin: 20px auto;
+  border-radius: 20px;
+  border: 3px solid #B2F2BB;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  margin: 10px 0;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+button.option {
+  padding: 12px;
+  font-size: 20px;
+  border-radius: 10px;
+  border: 2px solid #66BB6A;
+  background: #C8E6C9;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button.option:hover {
+  background: #A5D6A7;
+}
+
+#result {
+  font-size: 22px;
+  margin-top: 20px;
+  font-weight: bold;
+}
+
+#restart {
+  margin-top: 20px;
+  padding: 12px 25px;
+  font-size: 20px;
+  border-radius: 10px;
+  background: #81C784;
+  border: 2px solid #388E3C;
+  cursor: pointer;
+  display: none;
+}
+
+#restart:hover {
+  background: #66BB6A;
+}
+
+.back {
+  margin-top: 20px;
+  display: inline-block;
+  padding: 10px 20px;
+  background: #A5D6A7;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #333;
+  font-size: 18px;
+  border: 2px solid #66BB6A;
+}
+</style>
+</head>
+<body>
+
+<h1>🎮 Games – English for Kids</h1>
+<p style="font-size:18px;">Выбери правильный ответ 👇</p>
+
+<a href="kids.html" class="back">← Назад к разделам</a>
+
+<div id="quiz-box">
+  <h2 id="question"></h2>
+  <img id="image" src="" alt="" />
+  <div class="options" id="options"></div>
+  <div id="result"></div>
+  <button id="restart">Играть ещё раз 🔁</button>
+</div>
+
+<script>
+const questions = [
+  { word: "ball", img: "https://cdn-icons-png.flaticon.com/512/1046/1046787.png", options: ["ball","puzzle","gamepad","bike"] },
+  { word: "puzzle", img: "https://cdn-icons-png.flaticon.com/512/1046/1046788.png", options: ["puzzle","ball","gamepad","car"] },
+  { word: "gamepad", img: "https://cdn-icons-png.flaticon.com/512/1046/1046789.png", options: ["gamepad","puzzle","ball","bicycle"] },
+  { word: "bike", img: "https://cdn-icons-png.flaticon.com/512/1046/1046790.png", options: ["bike","ball","gamepad","puzzle"] },
+  { word: "teddy", img: "https://cdn-icons-png.flaticon.com/512/1046/1046791.png", options: ["teddy","bike","ball","gamepad"] },
+  { word: "kite", img: "https://cdn-icons-png.flaticon.com/512/1046/1046792.png", options: ["kite","teddy","puzzle","bike"] },
+  { word: "skateboard", img: "https://cdn-icons-png.flaticon.com/512/1046/1046793.png", options: ["skateboard","ball","bike","gamepad"] },
+  { word: "drum", img: "https://cdn-icons-png.flaticon.com/512/1046/1046794.png", options: ["drum","ball","puzzle","gamepad"] },
+  { word: "train", img: "https://cdn-icons-png.flaticon.com/512/1046/1046795.png", options: ["train","bike","ball","gamepad"] },
+  { word: "robot", img: "https://cdn-icons-png.flaticon.com/512/1046/1046796.png", options: ["robot","ball","bike","gamepad"] }
+];
+
+let current = 0;
+let score = 0;
+
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+shuffle(questions);
+
+function loadQuestion() {
+  const q = questions[current];
+  document.getElementById("question").innerText = `Что это за игра/игрушка? (${current+1}/10)`;
+  document.getElementById("image").src = q.img;
+  document.getElementById("image").alt = q.word;
+
+  const optBox = document.getElementById("options");
+  optBox.innerHTML = "";
+
+  shuffle(q.options).forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "option";
+    btn.innerText = opt;
+    btn.onclick = () => checkAnswer(btn,opt===q.word);
+    optBox.appendChild(btn);
+  });
+
+  optBox.style.display = "flex";
+  document.getElementById("image").style.display = "block";
+  document.getElementById("question").style.display = "block";
+  document.getElementById("result").innerText = "";
+  document.getElementById("restart").style.display = "none";
+}
+
+function checkAnswer(selectedBtn, correct){
+  const buttons = document.querySelectorAll("#options .option");
+  buttons.forEach(btn=>{
+    btn.disabled=true;
+    if(btn.innerText===questions[current].word) btn.style.backgroundColor="#A5D6A7";
+  });
+  if(!correct) selectedBtn.style.backgroundColor="#EF9A9A"; else score++;
+
+  current++;
+  setTimeout(()=>{ if(current<questions.length) loadQuestion(); else showResult(); },1000);
+}
+
+function showResult(){
+  document.getElementById("options").style.display="none";
+  document.getElementById("image").style.display="none";
+  document.getElementById("question").style.display="none";
+  document.getElementById("result").innerText=`Ваш результат: ${score} из ${questions.length}`;
+  document.getElementById("restart").style.display="block";
+}
+
+document.getElementById("restart").onclick=()=>{
+  current=0; score=0; shuffle(questions); loadQuestion();
+};
+
+loadQuestion();
+</script>
+
+</body>
+</html>
