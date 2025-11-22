@@ -6,93 +6,75 @@
 <style>
 body {
   font-family: Comic Sans MS, Arial, sans-serif;
-  background: #FFF0F5;
+  background: #FFF9E6;
   margin: 0;
   padding: 20px;
   text-align: center;
 }
-
-h1 {
-  color: #FF69B4;
-}
-
+h1 { color: #FF6F61; }
 #quiz-box {
   background: white;
   padding: 20px;
   max-width: 600px;
   margin: 20px auto;
   border-radius: 20px;
-  border: 3px solid #FFB6C1;
+  border: 3px solid #FFAB91;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-
 img {
   width: 200px;
   height: 200px;
-  object-fit: cover;
+  object-fit: contain;
   margin: 10px 0;
-  border-radius: 10px;
 }
-
 .options {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 15px;
 }
-
 button.option {
   padding: 12px;
   font-size: 20px;
   border-radius: 10px;
-  border: 2px solid #FF69B4;
-  background: #FFD1DC;
+  border: 2px solid #FF6F61;
+  background: #FFE0B2;
   cursor: pointer;
 }
-
-button.option:hover {
-  background: #FFB6C1;
-}
-
+button.option:hover { background: #FFD54F; }
 #result {
   font-size: 22px;
   margin-top: 20px;
   font-weight: bold;
 }
-
 #restart {
   margin-top: 20px;
   padding: 12px 25px;
   font-size: 20px;
   border-radius: 10px;
-  background: #FFB6C1;
-  border: 2px solid #FF69B4;
+  background: #FFCC80;
+  border: 2px solid #FF8A65;
   cursor: pointer;
   display: none;
 }
-
-#restart:hover {
-  background: #FF91A4;
-}
-
+#restart:hover { background: #FFB74D; }
 .back {
   margin-top: 20px;
   display: inline-block;
   padding: 10px 20px;
-  background: #FFC0CB;
+  background: #FFCC80;
   border-radius: 10px;
   text-decoration: none;
   color: #333;
   font-size: 18px;
-  border: 2px solid #FF69B4;
+  border: 2px solid #FF6F61;
 }
 </style>
 </head>
 <body>
 
-<h1>👪 Family – English for Kids</h1>
+<h1>👨‍👩‍👧‍👦 Family – English for Kids</h1>
 <p style="font-size:18px;">Выбери правильный ответ 👇</p>
-
 <a href="kids.html" class="back">← Назад к разделам</a>
 
 <div id="quiz-box">
@@ -105,16 +87,12 @@ button.option:hover {
 
 <script>
 const questions = [
-  { word: "mother", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Mother_with_child.jpg/320px-Mother_with_child.jpg", options: ["mother","father","sister"] },
-  { word: "father", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Father_with_son.jpg/320px-Father_with_son.jpg", options: ["father","mother","uncle"] },
-  { word: "brother", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Brother_and_sister.jpg/320px-Brother_and_sister.jpg", options: ["brother","cousin","sister"] },
-  { word: "sister", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Sisters_smiling.jpg/320px-Sisters_smiling.jpg", options: ["sister","brother","mother"] },
-  { word: "baby", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Baby_smiling.jpg/320px-Baby_smiling.jpg", options: ["baby","child","toddler"] },
-  { word: "grandmother", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Grandmother_with_grandchild.jpg/320px-Grandmother_with_grandchild.jpg", options: ["grandmother","grandfather","mother"] },
-  { word: "grandfather", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Grandfather_with_grandchild.jpg/320px-Grandfather_with_grandchild.jpg", options: ["grandfather","grandmother","uncle"] },
-  { word: "aunt", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Aunt_with_nephew.jpg/320px-Aunt_with_nephew.jpg", options: ["aunt","uncle","mother"] },
-  { word: "uncle", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Uncle_with_nephew.jpg/320px-Uncle_with_nephew.jpg", options: ["uncle","aunt","father"] },
-  { word: "cousin", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Cousins_together.jpg/320px-Cousins_together.jpg", options: ["cousin","brother","sister"] }
+  { word: "mother", img: "images/family/mother.png", options: ["mother","father","sister"] },
+  { word: "father", img: "images/family/father.png", options: ["father","mother","brother"] },
+  { word: "sister", img: "images/family/sister.png", options: ["sister","brother","grandma"] },
+  { word: "brother", img: "images/family/brother.png", options: ["brother","grandpa","father"] },
+  { word: "grandma", img: "images/family/grandma.png", options: ["grandma","grandpa","mother"] },
+  { word: "grandpa", img: "images/family/grandpa.png", options: ["grandpa","grandma","father"] }
 ];
 
 let current = 0;
@@ -131,7 +109,6 @@ function loadQuestion() {
 
   const optBox = document.getElementById("options");
   optBox.innerHTML = "";
-
   shuffle(q.options).forEach(opt => {
     const btn = document.createElement("button");
     btn.className = "option";
