@@ -48,6 +48,7 @@ button.option {
   border: 2px solid #FFA726;
   background: #FFECB3;
   cursor: pointer;
+  transition: background 0.3s;
 }
 
 button.option:hover {
@@ -127,11 +128,13 @@ async function logVisitKids() {
       timestamp: serverTimestamp(),
       userAgent: navigator.userAgent
     });
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка записи визита:", e);
+  }
 }
 logVisitKids();
 
-// ---------- ТЕСТЫ ДЛЯ ДЕТЕЙ (2 класс) ----------
+// ---------- ТЕСТЫ ДЛЯ ДЕТЕЙ ----------
 const questions = [
   {
     type: "image",
@@ -143,7 +146,7 @@ const questions = [
     type: "image",
     word: "dog",
     img: "https://cdn-icons-png.flaticon.com/512/620/620851.png",
-    options: ["rabbit", "dog", "fish"]
+    options: ["dog", "rabbit", "fish"]
   },
   {
     type: "image",
@@ -155,18 +158,18 @@ const questions = [
     type: "image",
     word: "cow",
     img: "https://cdn-icons-png.flaticon.com/512/1998/1998638.png",
-    options: ["cat", "cow", "bird"]
+    options: ["cow", "cat", "bird"]
   },
   {
     type: "image",
     word: "bird",
     img: "https://cdn-icons-png.flaticon.com/512/616/616430.png",
-    options: ["dog", "fish", "bird"]
+    options: ["bird", "dog", "fish"]
   },
   {
     type: "image",
     word: "fish",
-    img: "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+    img: "https://cdn-icons-png.flaticon.com/512/616/616394.png",
     options: ["fish", "cow", "cat"]
   }
 ];
@@ -186,29 +189,52 @@ function loadQuestion() {
 
   document.getElementById("question").innerText = `Что это за животное? (${current+1}/6)`;
   document.getElementById("image").src = q.img;
+  document.getElementById("image").alt = q.word;
 
   const optBox = document.getElementById("options");
   optBox.innerHTML = "";
 
-  q.options.forEach(opt => {
+  shuffle(q.options).forEach(opt => {
     const btn = document.createElement("button");
     btn.className = "option";
     btn.innerText = opt;
-    btn.onclick = () => checkAnswer(opt === q.word);
+    btn.onclick = () => checkAnswer(btn, opt === q.word);
     optBox.appendChild(btn);
   });
+
+  // показываем элементы на случай перезапуска
+  optBox.style.display = "flex";
+  document.getElementById("image").style.display = "block";
+  document.getElementById("question").style.display = "block";
+  document.getElementById("result").innerText = "";
+  document.getElementById("restart").style.display = "none";
 }
 
-function checkAnswer(correct) {
-  if (correct) score++;
+function checkAnswer(selectedBtn, correct) {
+  const buttons = document.querySelectorAll("#options .option");
+
+  buttons.forEach(btn => {
+    btn.disabled = true; // запрет на повторное нажатие
+    if (btn.innerText === questions[current].word) {
+      btn.style.backgroundColor = "#A5D6A7"; // зелёный правильный
+    }
+  });
+
+  if (!correct) {
+    selectedBtn.style.backgroundColor = "#EF9A9A"; // красный неправильный
+  } else {
+    score++;
+  }
 
   current++;
 
-  if (current < questions.length) {
-    loadQuestion();
-  } else {
-    showResult();
-  }
+  setTimeout(() => {
+    if (current < questions.length) {
+      loadQuestion();
+    } else {
+      showResult();
+    }
+  }, 1000); // задержка 1 секунда
 }
 
 function showResult() {
@@ -224,13 +250,6 @@ document.getElementById("restart").onclick = () => {
   current = 0;
   score = 0;
   shuffle(questions);
-
-  document.getElementById("options").style.display = "flex";
-  document.getElementById("image").style.display = "block";
-  document.getElementById("question").style.display = "block";
-  document.getElementById("result").innerText = "";
-  document.getElementById("restart").style.display = "none";
-
   loadQuestion();
 };
 
