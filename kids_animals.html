@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Kids English – Animals</title>
-
 <style>
 body {
   font-family: Comic Sans MS, Arial, sans-serif;
@@ -48,7 +47,6 @@ button.option {
   border: 2px solid #FFA726;
   background: #FFECB3;
   cursor: pointer;
-  transition: background 0.3s;
 }
 
 button.option:hover {
@@ -71,6 +69,7 @@ button.option:hover {
   cursor: pointer;
   display: none;
 }
+
 #restart:hover {
   background: #FFEE58;
 }
@@ -88,7 +87,6 @@ button.option:hover {
 }
 </style>
 </head>
-
 <body>
 
 <h1>🐶 Animals – English for Kids</h1>
@@ -99,95 +97,30 @@ button.option:hover {
 <div id="quiz-box">
   <h2 id="question"></h2>
   <img id="image" src="" alt="" />
-
   <div class="options" id="options"></div>
-
   <div id="result"></div>
   <button id="restart">Играть ещё раз 🔁</button>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from 
-"https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-
-// Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
-  authDomain: "engtestoge.firebaseapp.com",
-  projectId: "engtestoge"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Лог посещений
-async function logVisitKids() {
-  try {
-    await addDoc(collection(db, "visits_kids"), {
-      page: "kids_animals.html",
-      timestamp: serverTimestamp(),
-      userAgent: navigator.userAgent
-    });
-  } catch (e) {
-    console.error("Ошибка записи визита:", e);
-  }
-}
-logVisitKids();
-
-// ---------- ТЕСТЫ ДЛЯ ДЕТЕЙ ----------
+<script>
 const questions = [
-  {
-    type: "image",
-    word: "cat",
-    img: "https://cdn-icons-png.flaticon.com/512/1998/1998592.png",
-    options: ["cat", "dog", "cow"]
-  },
-  {
-    type: "image",
-    word: "dog",
-    img: "https://cdn-icons-png.flaticon.com/512/620/620851.png",
-    options: ["dog", "rabbit", "fish"]
-  },
-  {
-    type: "image",
-    word: "duck",
-    img: "https://cdn-icons-png.flaticon.com/512/616/616408.png",
-    options: ["duck", "cow", "goat"]
-  },
-  {
-    type: "image",
-    word: "cow",
-    img: "https://cdn-icons-png.flaticon.com/512/1998/1998638.png",
-    options: ["cow", "cat", "bird"]
-  },
-  {
-    type: "image",
-    word: "bird",
-    img: "https://cdn-icons-png.flaticon.com/512/616/616430.png",
-    options: ["bird", "dog", "fish"]
-  },
-  {
-    type: "image",
-    word: "fish",
-    img: "https://cdn-icons-png.flaticon.com/512/616/616394.png",
-    options: ["fish", "cow", "cat"]
-  }
+  { word: "cat", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/320px-Cat03.jpg", options: ["cat","dog","cow"] },
+  { word: "dog", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/320px-Golde33443.jpg", options: ["dog","cat","rabbit"] },
+  { word: "cow", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Cow_female_black_white.jpg/320px-Cow_female_black_white.jpg", options: ["cow","sheep","goat"] },
+  { word: "duck", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mallard2.jpg/320px-Mallard2.jpg", options: ["duck","chicken","goose"] },
+  { word: "bird", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Parus_major_-_01.jpg/320px-Parus_major_-_01.jpg", options: ["bird","cat","dog"] },
+  { word: "fish", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Goldfish3.jpg/320px-Goldfish3.jpg", options: ["fish","duck","frog"] }
 ];
 
 let current = 0;
 let score = 0;
 
-// Перемешать массив
-function shuffle(arr){
-  return arr.sort(() => Math.random() - 0.5);
-}
-
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
 shuffle(questions);
 
 function loadQuestion() {
   const q = questions[current];
-
-  document.getElementById("question").innerText = `Что это за животное? (${current+1}/6)`;
+  document.getElementById("question").innerText = `Что это за животное? (${current+1}/${questions.length})`;
   document.getElementById("image").src = q.img;
   document.getElementById("image").alt = q.word;
 
@@ -198,11 +131,10 @@ function loadQuestion() {
     const btn = document.createElement("button");
     btn.className = "option";
     btn.innerText = opt;
-    btn.onclick = () => checkAnswer(btn, opt === q.word);
+    btn.onclick = () => checkAnswer(btn,opt===q.word);
     optBox.appendChild(btn);
   });
 
-  // показываем элементы на случай перезапуска
   optBox.style.display = "flex";
   document.getElementById("image").style.display = "block";
   document.getElementById("question").style.display = "block";
@@ -210,50 +142,32 @@ function loadQuestion() {
   document.getElementById("restart").style.display = "none";
 }
 
-function checkAnswer(selectedBtn, correct) {
+function checkAnswer(selectedBtn, correct){
   const buttons = document.querySelectorAll("#options .option");
-
-  buttons.forEach(btn => {
-    btn.disabled = true; // запрет на повторное нажатие
-    if (btn.innerText === questions[current].word) {
-      btn.style.backgroundColor = "#A5D6A7"; // зелёный правильный
-    }
+  buttons.forEach(btn=>{
+    btn.disabled=true;
+    if(btn.innerText===questions[current].word) btn.style.backgroundColor="#A5D6A7";
   });
-
-  if (!correct) {
-    selectedBtn.style.backgroundColor = "#EF9A9A"; // красный неправильный
-  } else {
-    score++;
-  }
+  if(!correct) selectedBtn.style.backgroundColor="#EF9A9A"; else score++;
 
   current++;
-
-  setTimeout(() => {
-    if (current < questions.length) {
-      loadQuestion();
-    } else {
-      showResult();
-    }
-  }, 1000); // задержка 1 секунда
+  setTimeout(()=>{ if(current<questions.length) loadQuestion(); else showResult(); },1000);
 }
 
-function showResult() {
-  document.getElementById("options").style.display = "none";
-  document.getElementById("image").style.display = "none";
-  document.getElementById("question").style.display = "none";
-
-  document.getElementById("result").innerText = `Ваш результат: ${score} из 6`;
-  document.getElementById("restart").style.display = "block";
+function showResult(){
+  document.getElementById("options").style.display="none";
+  document.getElementById("image").style.display="none";
+  document.getElementById("question").style.display="none";
+  document.getElementById("result").innerText=`Ваш результат: ${score} из ${questions.length}`;
+  document.getElementById("restart").style.display="block";
 }
 
-document.getElementById("restart").onclick = () => {
-  current = 0;
-  score = 0;
-  shuffle(questions);
-  loadQuestion();
+document.getElementById("restart").onclick=()=>{
+  current=0; score=0; shuffle(questions); loadQuestion();
 };
 
 loadQuestion();
 </script>
+
 </body>
 </html>
