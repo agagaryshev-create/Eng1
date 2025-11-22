@@ -11,11 +11,7 @@ body {
   padding: 20px;
   text-align: center;
 }
-
-h1 {
-  color: #D17B00;
-}
-
+h1 { color: #D17B00; }
 #quiz-box {
   background: white;
   padding: 20px;
@@ -25,21 +21,18 @@ h1 {
   border: 3px solid #FFD27F;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-
 img {
   width: 200px;
   height: 200px;
   object-fit: contain;
   margin: 10px 0;
 }
-
 .options {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 15px;
 }
-
 button.option {
   padding: 12px;
   font-size: 20px;
@@ -48,17 +41,12 @@ button.option {
   background: #FFECB3;
   cursor: pointer;
 }
-
-button.option:hover {
-  background: #FFE082;
-}
-
+button.option:hover { background: #FFE082; }
 #result {
   font-size: 22px;
   margin-top: 20px;
   font-weight: bold;
 }
-
 #restart {
   margin-top: 20px;
   padding: 12px 25px;
@@ -69,11 +57,7 @@ button.option:hover {
   cursor: pointer;
   display: none;
 }
-
-#restart:hover {
-  background: #FFEE58;
-}
-
+#restart:hover { background: #FFEE58; }
 .back {
   margin-top: 20px;
   display: inline-block;
@@ -91,7 +75,6 @@ button.option:hover {
 
 <h1>🐶 Animals – English for Kids</h1>
 <p style="font-size:18px;">Выбери правильный ответ 👇</p>
-
 <a href="kids.html" class="back">← Назад к разделам</a>
 
 <div id="quiz-box">
@@ -104,12 +87,16 @@ button.option:hover {
 
 <script>
 const questions = [
-  { word: "cat", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/320px-Cat03.jpg", options: ["cat","dog","cow"] },
-  { word: "dog", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/320px-Golde33443.jpg", options: ["dog","cat","rabbit"] },
-  { word: "cow", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Cow_female_black_white.jpg/320px-Cow_female_black_white.jpg", options: ["cow","sheep","goat"] },
-  { word: "duck", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mallard2.jpg/320px-Mallard2.jpg", options: ["duck","chicken","goose"] },
-  { word: "bird", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Parus_major_-_01.jpg/320px-Parus_major_-_01.jpg", options: ["bird","cat","dog"] },
-  { word: "fish", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Goldfish3.jpg/320px-Goldfish3.jpg", options: ["fish","duck","frog"] }
+  { word: "cat", img: "images/animals/cat.jpg", options: ["cat","dog","cow"] },
+  { word: "dog", img: "images/animals/dog.jpg", options: ["dog","cat","rabbit"] },
+  { word: "cow", img: "images/animals/cow.jpg", options: ["cow","sheep","goat"] },
+  { word: "duck", img: "images/animals/duck.jpg", options: ["duck","chicken","goose"] },
+  { word: "bird", img: "images/animals/bird.jpg", options: ["bird","cat","dog"] },
+  { word: "fish", img: "images/animals/fish.jpg", options: ["fish","duck","frog"] },
+  { word: "rabbit", img: "images/animals/rabbit.jpg", options: ["rabbit","dog","cat"] },
+  { word: "horse", img: "images/animals/horse.jpg", options: ["horse","cow","goat"] },
+  { word: "sheep", img: "images/animals/sheep.jpg", options: ["sheep","goat","dog"] },
+  { word: "goat", img: "images/animals/goat.jpg", options: ["goat","sheep","cow"] }
 ];
 
 let current = 0;
@@ -126,7 +113,6 @@ function loadQuestion() {
 
   const optBox = document.getElementById("options");
   optBox.innerHTML = "";
-
   shuffle(q.options).forEach(opt => {
     const btn = document.createElement("button");
     btn.className = "option";
@@ -162,9 +148,7 @@ function showResult(){
   document.getElementById("restart").style.display="block";
 }
 
-document.getElementById("restart").onclick=()=>{
-  current=0; score=0; shuffle(questions); loadQuestion();
-};
+document.getElementById("restart").onclick=()=>{ current=0; score=0; shuffle(questions); loadQuestion(); };
 
 loadQuestion();
 </script>
