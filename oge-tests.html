@@ -65,7 +65,7 @@ onAuthStateChanged(auth, user => {
   if(currentUser) showStats();
 });
 
-let tests = {}; // сюда подгружаем JSON
+let tests = {}; 
 let currentLevelTests = [];
 
 // ===== Подгрузка JSON с тестами =====
@@ -73,7 +73,6 @@ async function loadTests() {
   const res = await fetch('tests.json');
   tests = await res.json();
 }
-await loadTests();
 
 // ===== Генерация карточек =====
 function renderCards(testArray) {
@@ -88,28 +87,14 @@ function renderCards(testArray) {
   });
 }
 
-// ===== Обработчики выбора уровня =====
-document.querySelectorAll('.levels button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const level = btn.dataset.level;
-    if(level === 'random') {
-      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[])];
-      currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
-    } else {
-      currentLevelTests = tests[level.toString()] || [];
-    }
-    renderCards(currentLevelTests);
-  });
-});
-
 // ===== Статистика =====
 async function showStats() {
+  if(!currentUser) return;
   const statsDiv = document.getElementById('stats');
   let html = '<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Дата</th></tr>';
-  
-  for(let level of ["1","2","3"]) {
-    const levelTests = tests[level] || [];
-    for(let t of levelTests) {
+
+  for(let level in tests){
+    for(let t of tests[level] || []){
       const colRef = collection(db, "results", currentUser.uid, `${t.id}_attempts`);
       const snap = await getDocs(colRef);
       if(snap.empty) continue;
@@ -122,6 +107,24 @@ async function showStats() {
   html += '</table>';
   statsDiv.innerHTML = html;
 }
+
+// ===== Ждем загрузки DOM и JSON =====
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadTests();
+
+  document.querySelectorAll('.levels button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const level = btn.dataset.level;
+      if(level === 'random') {
+        const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[])];
+        currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
+      } else {
+        currentLevelTests = tests[level.toString()] || [];
+      }
+      renderCards(currentLevelTests);
+    });
+  });
+});
 </script>
 
 </body>
