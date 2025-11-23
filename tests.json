@@ -1,148 +1,196 @@
 {
-  "levels": {
-    "1": [
-      {
-        "id": "lvl1_test1",
-        "title": "Animals",
-        "texts": [
-          {
-            "title": "Text 1",
-            "content": "Cats and dogs are common pets. They need food, water, and care."
-          }
-        ],
-        "questions": [
-          {
-            "type": "radio",
-            "question": "What pets are mentioned?",
-            "options": ["Cats and dogs", "Lions and tigers", "Birds and fish"],
-            "answer": "Cats and dogs"
-          },
-          {
-            "type": "text",
-            "question": "What do pets need?",
-            "answer": "food, water, and care"
-          }
-        ]
-      },
-      {
-        "id": "lvl1_test2",
-        "title": "Food",
-        "texts": [
-          {
-            "title": "Text 1",
-            "content": "Fruits like apples, bananas, and grapes are healthy. Children should eat them daily."
-          }
-        ],
-        "questions": [
-          {
-            "type": "radio",
-            "question": "Which fruit is mentioned?",
-            "options": ["Banana", "Tomato", "Bread"],
-            "answer": "Banana"
-          },
-          {
-            "type": "text",
-            "question": "How often should children eat fruits?",
-            "answer": "daily"
-          }
-        ]
-      }
-    ],
-    "2": [
-      {
-        "id": "lvl2_test1",
-        "title": "Travel",
-        "texts": [
-          {
-            "title": "Text 1",
-            "content": "Many people like to travel abroad. Airports are busy in summer. People book hotels in advance."
-          }
-        ],
-        "questions": [
-          {
-            "type": "radio",
-            "question": "When are airports busy?",
-            "options": ["In summer", "In winter", "In autumn"],
-            "answer": "In summer"
-          },
-          {
-            "type": "text",
-            "question": "Where do people book in advance?",
-            "answer": "hotels"
-          }
-        ]
-      },
-      {
-        "id": "lvl2_test2",
-        "title": "Hobbies",
-        "texts": [
-          {
-            "title": "Text 1",
-            "content": "Some teenagers enjoy painting, reading, or playing chess. Hobbies help develop creativity."
-          }
-        ],
-        "questions": [
-          {
-            "type": "radio",
-            "question": "Which hobby helps develop creativity?",
-            "options": ["Painting", "Watching TV", "Sleeping"],
-            "answer": "Painting"
-          },
-          {
-            "type": "text",
-            "question": "Name one hobby mentioned.",
-            "answer": "reading"
-          }
-        ]
-      }
-    ],
-    "3": [
-      {
-        "id": "lvl3_test1",
-        "title": "Science",
-        "texts": [
-          {
-            "title": "Text 1",
-            "content": "Physics and chemistry explain natural phenomena. Experiments help students understand complex concepts."
-          }
-        ],
-        "questions": [
-          {
-            "type": "radio",
-            "question": "Which subjects explain natural phenomena?",
-            "options": ["Physics and chemistry", "History and geography", "Art and music"],
-            "answer": "Physics and chemistry"
-          },
-          {
-            "type": "text",
-            "question": "What helps students understand concepts?",
-            "answer": "experiments"
-          }
-        ]
-      },
-      {
-        "id": "lvl3_test2",
-        "title": "Technology",
-        "texts": [
-          {
-            "title": "Text 1",
-            "content": "Modern technologies like AI and robotics are changing industries. People need new skills to work with them."
-          }
-        ],
-        "questions": [
-          {
-            "type": "radio",
-            "question": "Which technologies are mentioned?",
-            "options": ["AI and robotics", "Cars and bikes", "Books and pens"],
-            "answer": "AI and robotics"
-          },
-          {
-            "type": "text",
-            "question": "What do people need to work with new technologies?",
-            "answer": "new skills"
-          }
-        ]
-      }
-    ]
-  }
+  "1": [
+    {
+      "id": "t1",
+      "title": "Daily Routines 1",
+      "level": 1,
+      "maxPoints": 3,
+      "questions": [
+        {
+          "type": "radio",
+          "text": "What time does John usually wake up?",
+          "options": ["7 am", "8 am", "6 am"],
+          "answer": "7 am"
+        },
+        {
+          "type": "radio",
+          "text": "What does he do after breakfast?",
+          "options": ["Go to school", "Watch TV", "Play football"],
+          "answer": "Go to school"
+        },
+        {
+          "type": "radio",
+          "text": "Does he like reading books?",
+          "options": ["Yes", "No", "Sometimes"],
+          "answer": "Yes"
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "title": "Family 1",
+      "level": 1,
+      "maxPoints": 3,
+      "questions": [
+        {
+          "type": "radio",
+          "text": "How many people are in Anna's family?",
+          "options": ["3", "4", "5"],
+          "answer": "4"
+        },
+        {
+          "type": "radio",
+          "text": "Does she have a brother?",
+          "options": ["Yes", "No", "Not mentioned"],
+          "answer": "Yes"
+        },
+        {
+          "type": "radio",
+          "text": "What do they do on weekends?",
+          "options": ["Go shopping", "Go hiking", "Watch movies"],
+          "answer": "Go hiking"
+        }
+      ]
+    }
+  ],
+  "2": [
+    {
+      "id": "t3",
+      "title": "Holidays 2",
+      "level": 2,
+      "maxPoints": 4,
+      "questions": [
+        {
+          "type": "radio",
+          "text": "Where does Emma like to spend her holidays?",
+          "options": ["At home", "Travelling", "Shopping"],
+          "answer": "Travelling"
+        },
+        {
+          "type": "text",
+          "text": "She always takes ___ on her trips.",
+          "answer": "photos"
+        },
+        {
+          "type": "radio",
+          "text": "Does she keep a diary?",
+          "options": ["Yes", "No", "Sometimes"],
+          "answer": "Yes"
+        },
+        {
+          "type": "radio",
+          "text": "Which places does she visit?",
+          "options": ["Museums", "Parks", "Shops"],
+          "answer": "Museums"
+        }
+      ]
+    },
+    {
+      "id": "t4",
+      "title": "School Life 2",
+      "level": 2,
+      "maxPoints": 4,
+      "questions": [
+        {
+          "type": "radio",
+          "text": "Where does Tom usually study?",
+          "options": ["At home", "At school", "Online"],
+          "answer": "At school"
+        },
+        {
+          "type": "radio",
+          "text": "What subject does he like best?",
+          "options": ["Math", "English", "History"],
+          "answer": "English"
+        },
+        {
+          "type": "text",
+          "text": "He always ___ his homework on time.",
+          "answer": "does"
+        },
+        {
+          "type": "radio",
+          "text": "Who helps him if he has problems?",
+          "options": ["Parents", "Friends", "Teacher"],
+          "answer": "Teacher"
+        }
+      ]
+    }
+  ],
+  "3": [
+    {
+      "id": "t5",
+      "title": "Environment 3",
+      "level": 3,
+      "maxPoints": 5,
+      "questions": [
+        {
+          "type": "radio",
+          "text": "What is the main environmental problem?",
+          "options": ["Pollution", "Traffic", "Education"],
+          "answer": "Pollution"
+        },
+        {
+          "type": "text",
+          "text": "People should ___ more trees.",
+          "answer": "plant"
+        },
+        {
+          "type": "radio",
+          "text": "Who is responsible for keeping parks clean?",
+          "options": ["Government", "Citizens", "Both"],
+          "answer": "Both"
+        },
+        {
+          "type": "radio",
+          "text": "Recycling helps to reduce ___",
+          "options": ["Waste", "Water", "Noise"],
+          "answer": "Waste"
+        },
+        {
+          "type": "radio",
+          "text": "We should turn off lights when not in use?",
+          "options": ["Yes", "No", "Sometimes"],
+          "answer": "Yes"
+        }
+      ]
+    },
+    {
+      "id": "t6",
+      "title": "Daily Life 3",
+      "level": 3,
+      "maxPoints": 5,
+      "questions": [
+        {
+          "type": "radio",
+          "text": "What is usually done in the morning?",
+          "options": ["Breakfast", "Dinner", "Lunch"],
+          "answer": "Breakfast"
+        },
+        {
+          "type": "radio",
+          "text": "When do people usually sleep?",
+          "options": ["Morning", "Night", "Afternoon"],
+          "answer": "Night"
+        },
+        {
+          "type": "text",
+          "text": "We ___ clothes every week.",
+          "answer": "wash"
+        },
+        {
+          "type": "radio",
+          "text": "People usually ___ to work or school.",
+          "options": ["walk", "swim", "fly"],
+          "answer": "walk"
+        },
+        {
+          "type": "radio",
+          "text": "Eating vegetables is ___ for health.",
+          "options": ["good", "bad", "boring"],
+          "answer": "good"
+        }
+      ]
+    }
+  ]
 }
