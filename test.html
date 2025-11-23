@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OGE Test</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; line-height: 1.6; }
+h1 { text-align: center; margin-bottom: 20px; }
+.question { margin-bottom: 15px; }
+input[type="text"] { width: 200px; padding: 5px; margin-top: 5px; }
+.btn { padding: 10px 15px; border: 1px solid #333; cursor: pointer; margin-top: 20px; display: inline-block; }
+#result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+#back-btn { margin-top: 30px; padding: 8px 12px; cursor: pointer; border: 1px solid #333; background-color: #f0f0f0; display: block; }
+</style>
+</head>
+<body>
+
+<h1 id="test-title">OGE Test</h1>
+
+<div id="questions-container"></div>
+
+<div class="btn" id="check-btn">Проверить</div>
+<div id="result"></div>
+<button id="back-btn">← Вернуться к тестам</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// ===== Firebase =====
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+onAuthStateChanged(auth, user => currentUser = user);
+
+// ===== Получаем id теста из URL =====
+const params = new URLSearchParams(window.location.search);
+const testId = params.get('id');
+
+if(!testId){
+  document.getElementById("questions-container").innerHTML = "<p>Ошибка: тест не выбран.</p>";
+}
+
+// ===== Загружаем JSON с тестами =====
+async function loadTest(){
+  const res = await fetch('tests.json');
+  const data = await res.json();
+
+  let test = null;
+  for(const level of Object.keys(data)){
+    test = data[level].find(t => t.id === testId);
+    if(test) break;
+  }
+
+  if(!test){
+    document.getElementById("questions-container").innerHTML = "<p>Ошибка: тест не найден.</p>";
+    return;
+  }
+
+  renderTest(test);
+}
+
+function renderTest(test){
+  document.getElementById("test-title").innerText = test.title;
+  const container = document.getElementById("questions-container");
+  container.innerHTML = "";
+
+  test.questions.forEach((q,i)=>{
+    const div = document.createElement("div");
+    div.className = "question";
+    div.dataset.type = q.type;
+    div.dataset.answer = q.answer;
+
+    let html = `<p>${i+1}. ${q.text}</p>`;
+    if(q.type === "radio"){
+      q.options.forEach(opt=>{
+        html += `<label><input type="radio" name="q${i}" value="${opt}"> ${opt}</label><br>`;
+      });
+    } else if(q.type === "text"){
+      html += `<input type="text" name="q${i}" placeholder="ваш ответ">`;
+    }
+    div.innerHTML = html;
+    container.appendChild(div);
+  });
+}
+
+// ===== Проверка =====
+document.getElementById("check-btn").addEventListener("click", async ()=>{
+  const questions = document.querySelectorAll(".question");
+  let score = 0;
+
+  questions.forEach((q,i)=>{
+    const type = q.dataset.type;
+    const answer = q.dataset.answer.toLowerCase();
+
+    if(type === "radio"){
+      const selected = q.querySelector('input[type="radio"]:checked');
+      if(selected && selected.value.toLowerCase() === answer) score++;
+    } else if(type === "text"){
+      const input = q.querySelector('input[type="text"]');
+      if(input.value.trim().toLowerCase() === answer) score++;
+    }
+  });
+
+  document.getElementById("result").innerText = `Ваш результат: ${score} / ${questions.length}`;
+
+  if(!currentUser){
+    alert("Чтобы сохранить результат — войдите в систему!");
+    return;
+  }
+
+  // Сохраняем результат
+  const colRef = collection(db, "results", currentUser.uid, `${testId}_attempts`);
+  await addDoc(colRef, {
+    score: score,
+    date: new Date()
+  });
+});
+
+// ===== Кнопка возврата =====
+document.getElementById("back-btn").addEventListener("click", ()=>{
+  window.location.href = "oge-tests.html";
+});
+
+loadTest();
+</script>
+
+</body>
+</html>

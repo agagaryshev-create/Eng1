@@ -1,0 +1,148 @@
+{
+  "levels": {
+    "1": [
+      {
+        "id": "lvl1_test1",
+        "title": "Animals",
+        "texts": [
+          {
+            "title": "Text 1",
+            "content": "Cats and dogs are common pets. They need food, water, and care."
+          }
+        ],
+        "questions": [
+          {
+            "type": "radio",
+            "question": "What pets are mentioned?",
+            "options": ["Cats and dogs", "Lions and tigers", "Birds and fish"],
+            "answer": "Cats and dogs"
+          },
+          {
+            "type": "text",
+            "question": "What do pets need?",
+            "answer": "food, water, and care"
+          }
+        ]
+      },
+      {
+        "id": "lvl1_test2",
+        "title": "Food",
+        "texts": [
+          {
+            "title": "Text 1",
+            "content": "Fruits like apples, bananas, and grapes are healthy. Children should eat them daily."
+          }
+        ],
+        "questions": [
+          {
+            "type": "radio",
+            "question": "Which fruit is mentioned?",
+            "options": ["Banana", "Tomato", "Bread"],
+            "answer": "Banana"
+          },
+          {
+            "type": "text",
+            "question": "How often should children eat fruits?",
+            "answer": "daily"
+          }
+        ]
+      }
+    ],
+    "2": [
+      {
+        "id": "lvl2_test1",
+        "title": "Travel",
+        "texts": [
+          {
+            "title": "Text 1",
+            "content": "Many people like to travel abroad. Airports are busy in summer. People book hotels in advance."
+          }
+        ],
+        "questions": [
+          {
+            "type": "radio",
+            "question": "When are airports busy?",
+            "options": ["In summer", "In winter", "In autumn"],
+            "answer": "In summer"
+          },
+          {
+            "type": "text",
+            "question": "Where do people book in advance?",
+            "answer": "hotels"
+          }
+        ]
+      },
+      {
+        "id": "lvl2_test2",
+        "title": "Hobbies",
+        "texts": [
+          {
+            "title": "Text 1",
+            "content": "Some teenagers enjoy painting, reading, or playing chess. Hobbies help develop creativity."
+          }
+        ],
+        "questions": [
+          {
+            "type": "radio",
+            "question": "Which hobby helps develop creativity?",
+            "options": ["Painting", "Watching TV", "Sleeping"],
+            "answer": "Painting"
+          },
+          {
+            "type": "text",
+            "question": "Name one hobby mentioned.",
+            "answer": "reading"
+          }
+        ]
+      }
+    ],
+    "3": [
+      {
+        "id": "lvl3_test1",
+        "title": "Science",
+        "texts": [
+          {
+            "title": "Text 1",
+            "content": "Physics and chemistry explain natural phenomena. Experiments help students understand complex concepts."
+          }
+        ],
+        "questions": [
+          {
+            "type": "radio",
+            "question": "Which subjects explain natural phenomena?",
+            "options": ["Physics and chemistry", "History and geography", "Art and music"],
+            "answer": "Physics and chemistry"
+          },
+          {
+            "type": "text",
+            "question": "What helps students understand concepts?",
+            "answer": "experiments"
+          }
+        ]
+      },
+      {
+        "id": "lvl3_test2",
+        "title": "Technology",
+        "texts": [
+          {
+            "title": "Text 1",
+            "content": "Modern technologies like AI and robotics are changing industries. People need new skills to work with them."
+          }
+        ],
+        "questions": [
+          {
+            "type": "radio",
+            "question": "Which technologies are mentioned?",
+            "options": ["AI and robotics", "Cars and bikes", "Books and pens"],
+            "answer": "AI and robotics"
+          },
+          {
+            "type": "text",
+            "question": "What do people need to work with new technologies?",
+            "answer": "new skills"
+          }
+        ]
+      }
+    ]
+  }
+}
