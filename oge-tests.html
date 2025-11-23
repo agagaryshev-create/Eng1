@@ -37,6 +37,7 @@ h1 { text-align: center; }
   <button data-level="1">Уровень 1</button>
   <button data-level="2">Уровень 2</button>
   <button data-level="3">Уровень 3</button>
+  <button data-level="4">Уровень 4</button>
   <button data-level="random">Случайные тесты</button>
 </div>
 
@@ -87,7 +88,6 @@ await loadTests();
 
 // ===== Генерация карточек =====
 function renderCards(testArray) {
-  console.log("Отображаем карточки тестов:", testArray);
   const menu = document.getElementById('test-menu');
   menu.innerHTML = '';
   testArray.forEach(t => {
@@ -106,7 +106,7 @@ document.querySelectorAll('.levels button').forEach(btn => {
     console.log("Нажат уровень:", level);
 
     if(level === 'random') {
-      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[])];
+      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[]), ...(tests["4"]||[])];
       currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
     } else {
       if(!Array.isArray(tests[level])) {
@@ -125,7 +125,7 @@ async function showStats() {
   const statsDiv = document.getElementById('stats');
   let html = '<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Дата</th></tr>';
 
-  for(const lvl of ["1","2","3"]) {
+  for(const lvl of ["1","2","3","4"]) {
     const arr = tests[lvl];
     if(!Array.isArray(arr)) continue;
     for(const t of arr) {
