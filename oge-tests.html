@@ -41,6 +41,7 @@ h1 { text-align: center; }
 </div>
 
 <div class="menu" id="test-menu"></div>
+
 <div id="stats">Войдите, чтобы увидеть статистику.</div>
 
 <script type="module">
@@ -64,14 +65,13 @@ onAuthStateChanged(auth, user => {
   if(currentUser) showStats();
 });
 
-let tests = {}; 
+let tests = {}; // сюда подгружаем JSON
 let currentLevelTests = [];
 
 // ===== Подгрузка JSON с тестами =====
 async function loadTests() {
   const res = await fetch('tests.json');
   tests = await res.json();
-  console.log("Tests loaded:", tests);
 }
 await loadTests();
 
@@ -82,7 +82,7 @@ function renderCards(testArray) {
   testArray.forEach(t => {
     const card = document.createElement('a');
     card.className = 'card';
-    card.href = `test.html?id=${t.id}`;
+    card.href = `test.html?id=${t.id}`; // универсальный test.html
     card.innerHTML = `<h3>${t.title}</h3><p>Уровень: ${t.level}</p>`;
     menu.appendChild(card);
   });
@@ -93,10 +93,10 @@ document.querySelectorAll('.levels button').forEach(btn => {
   btn.addEventListener('click', () => {
     const level = btn.dataset.level;
     if(level === 'random') {
-      let allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[])];
+      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[])];
       currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
     } else {
-      currentLevelTests = tests[level] || [];
+      currentLevelTests = tests[level.toString()] || [];
     }
     renderCards(currentLevelTests);
   });
