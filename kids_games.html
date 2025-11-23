@@ -106,30 +106,34 @@ button.option:hover {
 
 <script>
 const allGames = [
-  "airplane","ball","bike","boat","Building blocks","car","doll","drum",
-  "gamepad","guitar","helicopter","kite","lego","phone","puzzle","ship",
-  "teddy","train"
+  "airplane","ball","bike","boat","car","doll","drum",
+  "gamepad","guitar","helicopter","kite","lego","phone",
+  "puzzle","ship","teddy","train"
 ];
 
 function getImgUrl(name){
   return `images/games/${name.replace(/ /g,"_")}.png`;
 }
 
-const questions = allGames.map(name=>{
-  const optionsSet = new Set([name]);
-  while(optionsSet.size < 4){
-    const rand = allGames[Math.floor(Math.random()*allGames.length)];
-    optionsSet.add(rand);
-  }
-  const options = Array.from(optionsSet);
-  return { word: name, img: getImgUrl(name), options };
-});
+// Выбираем 10 случайных игрушек для текущей игры
+function getRandomQuestions(count){
+  const shuffled = [...allGames].sort(()=>Math.random()-0.5);
+  return shuffled.slice(0,count).map(name=>{
+    const optionsSet = new Set([name]);
+    while(optionsSet.size < 4){
+      const rand = allGames[Math.floor(Math.random()*allGames.length)];
+      optionsSet.add(rand);
+    }
+    const options = Array.from(optionsSet);
+    return { word: name, img: getImgUrl(name), options };
+  });
+}
 
+let questions = getRandomQuestions(10);
 let current = 0;
 let score = 0;
 
 function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
-shuffle(questions);
 
 function loadQuestion() {
   const q = questions[current];
@@ -176,10 +180,11 @@ function showResult(){
 }
 
 document.getElementById("restart").onclick=()=>{
-  current=0; score=0; shuffle(questions); loadQuestion();
+  current=0; score=0; questions = getRandomQuestions(10); loadQuestion();
 };
 
 loadQuestion();
+
 </script>
 
 </body>
