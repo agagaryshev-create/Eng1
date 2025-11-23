@@ -105,18 +105,25 @@ button.option:hover {
 </div>
 
 <script>
-const questions = [
-  { word: "ball", img: "https://cdn-icons-png.flaticon.com/512/1046/1046787.png", options: ["ball","puzzle","gamepad","bike"] },
-  { word: "puzzle", img: "https://cdn-icons-png.flaticon.com/512/1046/1046788.png", options: ["puzzle","ball","gamepad","car"] },
-  { word: "gamepad", img: "https://cdn-icons-png.flaticon.com/512/1046/1046789.png", options: ["gamepad","puzzle","ball","bicycle"] },
-  { word: "bike", img: "https://cdn-icons-png.flaticon.com/512/1046/1046790.png", options: ["bike","ball","gamepad","puzzle"] },
-  { word: "teddy", img: "https://cdn-icons-png.flaticon.com/512/1046/1046791.png", options: ["teddy","bike","ball","gamepad"] },
-  { word: "kite", img: "https://cdn-icons-png.flaticon.com/512/1046/1046792.png", options: ["kite","teddy","puzzle","bike"] },
-  { word: "skateboard", img: "https://cdn-icons-png.flaticon.com/512/1046/1046793.png", options: ["skateboard","ball","bike","gamepad"] },
-  { word: "drum", img: "https://cdn-icons-png.flaticon.com/512/1046/1046794.png", options: ["drum","ball","puzzle","gamepad"] },
-  { word: "train", img: "https://cdn-icons-png.flaticon.com/512/1046/1046795.png", options: ["train","bike","ball","gamepad"] },
-  { word: "robot", img: "https://cdn-icons-png.flaticon.com/512/1046/1046796.png", options: ["robot","ball","bike","gamepad"] }
+const allGames = [
+  "airplane","ball","bike","boat","Building blocks","car","doll","drum",
+  "gamepad","guitar","helicopter","kite","lego","phone","puzzle","ship",
+  "teddy","train"
 ];
+
+function getImgUrl(name){
+  return `images/games/${name.replace(/ /g,"_")}.png`;
+}
+
+const questions = allGames.map(name=>{
+  const optionsSet = new Set([name]);
+  while(optionsSet.size < 4){
+    const rand = allGames[Math.floor(Math.random()*allGames.length)];
+    optionsSet.add(rand);
+  }
+  const options = Array.from(optionsSet);
+  return { word: name, img: getImgUrl(name), options };
+});
 
 let current = 0;
 let score = 0;
@@ -126,7 +133,7 @@ shuffle(questions);
 
 function loadQuestion() {
   const q = questions[current];
-  document.getElementById("question").innerText = `Что это за игра/игрушка? (${current+1}/10)`;
+  document.getElementById("question").innerText = `Что это за игра/игрушка? (${current+1}/${questions.length})`;
   document.getElementById("image").src = q.img;
   document.getElementById("image").alt = q.word;
 
