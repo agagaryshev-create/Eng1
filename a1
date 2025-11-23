@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Админка – Проверка коллекций</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #333; padding: 6px; text-align: left; }
+  th { background: #eee; }
+</style>
+</head>
+<body>
+
+<h1>Админка – Проверка коллекций пользователей</h1>
+<p>Выводит пользователей, их подколлекции и пример документа.</p>
+
+<button id="loadBtn">Загрузить данные</button>
+<div id="output" style="margin-top: 20px;"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js"></script>
+
+<script>
+  // ===== Firebase конфиг =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+    authDomain: "engtestoge.firebaseapp.com",
+    projectId: "engtestoge"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  document.getElementById("loadBtn").onclick = async function() {
+    const output = document.getElementById("output");
+    output.innerHTML = "Загрузка...";
+
+    const resultsSnap = await db.collection("results").get();
+
+    let html = `<table>
+      <tr><th>UID</th><th>Подколлекция</th><th>Пример документа</th></tr>`;
+
+    for (let userDoc of resultsSnap.docs) {
+      const uid = userDoc.id;
+      const userRef = db.collection("results").doc(uid);
+      const subcollections = await userRef.listCollections();
+
+      for (let subCol of subcollections) {
+        const sampleSnap = await subCol.limit(1).get();
+        let sampleData = "пусто";
+        sampleSnap.forEach(doc => { sampleData = JSON.stringify(doc.data()); });
+
+        html += `<tr>
+          <td>${uid}</td>
+          <td>${subCol.id}</td>
+          <td>${sampleData}</td>
+        </tr>`;
+      }
+    }
+
+    html += "</table>";
+    output.innerHTML = html;
+  }
+</script>
+
+</body>
+</html>
