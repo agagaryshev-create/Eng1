@@ -5,6 +5,7 @@
       "title": "Daily Routines 1",
       "level": 1,
       "maxPoints": 3,
+      "text": "John lives in a small town. He wakes up early, goes to school, and enjoys reading books in the evening.",
       "questions": [
         {
           "type": "radio",
@@ -31,6 +32,7 @@
       "title": "Family 1",
       "level": 1,
       "maxPoints": 3,
+      "text": "Anna has a family of four. She has a brother and they often go hiking on weekends.",
       "questions": [
         {
           "type": "radio",
@@ -59,6 +61,7 @@
       "title": "Holidays 2",
       "level": 2,
       "maxPoints": 4,
+      "text": "Emma likes spending her holidays travelling. She enjoys visiting museums and taking photos.",
       "questions": [
         {
           "type": "radio",
@@ -90,6 +93,7 @@
       "title": "School Life 2",
       "level": 2,
       "maxPoints": 4,
+      "text": "Tom studies at school. He likes English the most and always does his homework on time.",
       "questions": [
         {
           "type": "radio",
@@ -123,6 +127,7 @@
       "title": "Environment 3",
       "level": 3,
       "maxPoints": 5,
+      "text": "Environmental issues are important. People should plant more trees and recycle waste.",
       "questions": [
         {
           "type": "radio",
@@ -160,6 +165,7 @@
       "title": "Daily Life 3",
       "level": 3,
       "maxPoints": 5,
+      "text": "Daily routines include breakfast, going to work or school, and washing clothes regularly.",
       "questions": [
         {
           "type": "radio",
