@@ -86,15 +86,15 @@ async function loadTests() {
 await loadTests();
 
 // ===== Генерация карточек =====
-function renderCards(testArray) {
-  console.log("Отображаем карточки тестов:", testArray);
+function renderCards(testArray, lvl) {
+  console.log("Отображаем карточки тестов:", testArray, "Уровень:", lvl);
   const menu = document.getElementById('test-menu');
   menu.innerHTML = '';
   testArray.forEach(t => {
     const card = document.createElement('a');
     card.className = 'card';
     card.href = `test.html?id=${t.id}`;
-    card.innerHTML = `<h3>${t.title}</h3><p>Уровень: ${t.level}</p>`;
+    card.innerHTML = `<h3>${t.title}</h3><p>Уровень: ${lvl}</p>`;
     menu.appendChild(card);
   });
 }
@@ -106,28 +106,24 @@ document.querySelectorAll('.levels button').forEach(btn => {
     console.log("Нажат уровень:", level);
 
     if(level === 'random') {
-      const allTests = [
-        ...(tests.levels["1"]||[]),
-        ...(tests.levels["2"]||[]),
-        ...(tests.levels["3"]||[])
-      ];
+      const allTests = [...(tests.levels["1"]||[]), ...(tests.levels["2"]||[]), ...(tests.levels["3"]||[])];
       currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
+      renderCards(currentLevelTests, 'случайный');
     } else {
-      const arr = tests.levels[level];
-      if(!Array.isArray(arr)) {
-        console.error("Тесты для уровня", level, "не массив или отсутствуют:", arr);
+      const key = level.toString();
+      if(!Array.isArray(tests.levels[key])) {
+        console.error("Тесты для уровня", key, "не массив или отсутствуют:", tests.levels[key]);
         currentLevelTests = [];
       } else {
-        currentLevelTests = arr;
+        currentLevelTests = tests.levels[key];
       }
+      renderCards(currentLevelTests, key);
     }
-    renderCards(currentLevelTests);
   });
 });
 
 // ===== Статистика =====
 async function showStats() {
-  if(!currentUser) return;
   const statsDiv = document.getElementById('stats');
   let html = '<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Дата</th></tr>';
 
@@ -142,8 +138,8 @@ async function showStats() {
         const last = snap.docs[snap.docs.length-1].data();
         const dateStr = last.date?.toDate ? last.date.toDate().toLocaleString() : '';
         html += `<tr><td>${t.title}</td><td>${last.score} / ${t.maxPoints}</td><td>${dateStr}</td></tr>`;
-      } catch(e) {
-        console.error("Ошибка при получении статистики для теста", t.id, e);
+      } catch(err) {
+        console.error("Ошибка при получении статистики для", t.id, err);
       }
     }
   }
