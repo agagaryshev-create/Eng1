@@ -18,9 +18,9 @@
 <button id="loadBtn">Загрузить данные</button>
 <div id="output" style="margin-top: 20px;"></div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js"></script>
+<!-- Firebase (compat!) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 
 <script>
   // ===== Firebase конфиг =====
@@ -50,12 +50,12 @@
       for (let subCol of subcollections) {
         const sampleSnap = await subCol.limit(1).get();
         let sampleData = "пусто";
-        sampleSnap.forEach(doc => { sampleData = JSON.stringify(doc.data()); });
+        sampleSnap.forEach(doc => { sampleData = JSON.stringify(doc.data(), null, 2); });
 
         html += `<tr>
           <td>${uid}</td>
           <td>${subCol.id}</td>
-          <td>${sampleData}</td>
+          <td><pre>${sampleData}</pre></td>
         </tr>`;
       }
     }
