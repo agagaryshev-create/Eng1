@@ -106,15 +106,19 @@ document.querySelectorAll('.levels button').forEach(btn => {
     console.log("Нажат уровень:", level);
 
     if(level === 'random') {
-      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[])];
+      const allTests = [
+        ...(tests.levels["1"]||[]),
+        ...(tests.levels["2"]||[]),
+        ...(tests.levels["3"]||[])
+      ];
       currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
     } else {
-      const key = level.toString();
-      if(!Array.isArray(tests[key])) {
-        console.error("Тесты для уровня", key, "не массив или отсутствуют:", tests[key]);
+      const arr = tests.levels[level];
+      if(!Array.isArray(arr)) {
+        console.error("Тесты для уровня", level, "не массив или отсутствуют:", arr);
         currentLevelTests = [];
       } else {
-        currentLevelTests = tests[key];
+        currentLevelTests = arr;
       }
     }
     renderCards(currentLevelTests);
@@ -123,19 +127,24 @@ document.querySelectorAll('.levels button').forEach(btn => {
 
 // ===== Статистика =====
 async function showStats() {
+  if(!currentUser) return;
   const statsDiv = document.getElementById('stats');
   let html = '<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Дата</th></tr>';
 
   for(const lvl of ["1","2","3"]) {
-    const arr = tests[lvl];
+    const arr = tests.levels[lvl];
     if(!Array.isArray(arr)) continue;
     for(const t of arr) {
-      const colRef = collection(db, "results", currentUser.uid, `${t.id}_attempts`);
-      const snap = await getDocs(colRef);
-      if(snap.empty) continue;
-      const last = snap.docs[snap.docs.length-1].data();
-      const dateStr = last.date?.toDate ? last.date.toDate().toLocaleString() : '';
-      html += `<tr><td>${t.title}</td><td>${last.score} / ${t.maxPoints}</td><td>${dateStr}</td></tr>`;
+      try {
+        const colRef = collection(db, "results", currentUser.uid, `${t.id}_attempts`);
+        const snap = await getDocs(colRef);
+        if(snap.empty) continue;
+        const last = snap.docs[snap.docs.length-1].data();
+        const dateStr = last.date?.toDate ? last.date.toDate().toLocaleString() : '';
+        html += `<tr><td>${t.title}</td><td>${last.score} / ${t.maxPoints}</td><td>${dateStr}</td></tr>`;
+      } catch(e) {
+        console.error("Ошибка при получении статистики для теста", t.id, e);
+      }
     }
   }
 
