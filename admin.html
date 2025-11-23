@@ -1,9 +1,30 @@
-<h1>Админка</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Админка OGE Tests</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; }
+button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+#output { margin-top: 20px; }
+.progress-container { width: 100%; background: #eee; border-radius: 5px; overflow: hidden; margin: 10px 0; }
+.progress-bar { height: 20px; width: 0%; background: linear-gradient(90deg, #4CAF50, #81C784); text-align: center; color: white; font-weight: bold; }
+table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+th, td { border: 1px solid #333; padding: 6px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Админка OGE Tests</h1>
 
 <button id="loadBtn">Показать статистику</button>
 <button id="diagBtn">Показать диагностику</button>
-<button id="visitsBtn">Статистика посещений</button>
+<button id="visitsBtn">Сводная статистика посещений</button>
 <button id="visitsDetailedBtn">Подробная статистика посещений</button>
+
+<div class="progress-container" style="display:none;">
+  <div class="progress-bar" id="progressBar">0%</div>
+</div>
 
 <div id="output"></div>
 
@@ -11,7 +32,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ====== Firebase конфиг ======
+// ===== Firebase конфиг =====
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -21,65 +42,78 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const testIds = ["test1","test2","test3","test4","test5"];
-const maxPoints = { test1: 3, test2: 3, test3: 5, test4: 3, test5: 5 };
+// ===== Загрузка списка всех тестов =====
+let allTests = [];
+async function loadAllTests() {
+  try {
+    const res = await fetch('tests.json');
+    const testsJSON = await res.json();
+    // Сохраняем все тесты в массив
+    for (const level in testsJSON) {
+      allTests.push(...testsJSON[level]);
+    }
+  } catch(e) { console.error("Ошибка загрузки tests.json", e); }
+}
+await loadAllTests();
 
-// кнопки
+// ===== Кнопки =====
 document.getElementById("loadBtn").onclick = loadStats;
 document.getElementById("diagBtn").onclick = runDiag;
 document.getElementById("visitsBtn").onclick = showVisits;
 document.getElementById("visitsDetailedBtn").onclick = showVisitsDetailed;
+
+const progressBar = document.getElementById("progressBar");
 
 // =============================================================
 // 📌 Функция: Загрузка статистики тестов (ТАБЛИЦА)
 // =============================================================
 async function loadStats() {
   const output = document.getElementById("output");
-  output.innerHTML = "Загрузка...";
+  output.innerHTML = "";
+  document.querySelector(".progress-container").style.display = "block";
+  progressBar.style.width = "0%";
+  progressBar.innerText = "0%";
 
-  const resultCol = collection(db, "results");
-  const resultSnap = await getDocs(resultCol);
-
+  const resultSnap = await getDocs(collection(db, "results"));
   const uidList = resultSnap.docs.map(d => d.id);
 
   let html = `<h3>Статистика тестов</h3>`;
-  html += `<table border="1" cellpadding="6"><tr><th>Email / UID</th>`;
-
-  testIds.forEach(t => html += `<th>${t}</th>`);
+  html += `<table><tr><th>Email / UID</th>`;
+  allTests.forEach((t,i)=>html += `<th>${i+1}. ${t.title}</th>`);
   html += `<th>Total</th></tr>`;
 
-  for (let uid of uidList) {
+  for (let u=0; u<uidList.length; u++) {
+    const uid = uidList[u];
     html += `<tr><td>${uid}</td>`;
 
     let totalScore = 0;
     let totalMax = 0;
 
-    for (let testId of testIds) {
-      const attemptsCol = collection(db, `results/${uid}/${testId}_attempts`);
-      const snap = await getDocs(attemptsCol);
+    // параллельно загружаем все попытки тестов пользователя
+    const attemptsPromises = allTests.map(async t => {
+      const snap = await getDocs(collection(db, `results/${uid}/${t.id}_attempts`));
+      const lastScore = snap.empty ? 0 : Math.max(...snap.docs.map(d=>d.data().score??0));
+      return { lastScore, maxPoints: t.maxPoints ?? 5 };
+    });
+    const attempts = await Promise.all(attemptsPromises);
 
-      if (snap.empty) {
-        html += `<td>–</td>`;
-        totalMax += maxPoints[testId];
-        continue;
-      }
-
-      let lastScore = 0;
-      snap.forEach(doc => {
-        const s = doc.data().score ?? 0;
-        if (s > lastScore) lastScore = s;
-      });
-
-      html += `<td>${lastScore} / ${maxPoints[testId]}</td>`;
-      totalScore += lastScore;
-      totalMax += maxPoints[testId];
-    }
+    attempts.forEach(a => {
+      html += `<td>${a.lastScore} / ${a.maxPoints}</td>`;
+      totalScore += a.lastScore;
+      totalMax += a.maxPoints;
+    });
 
     html += `<td>${totalScore} / ${totalMax}</td></tr>`;
+
+    // обновляем прогресс
+    const percent = Math.round((u+1)/uidList.length*100);
+    progressBar.style.width = percent + "%";
+    progressBar.innerText = percent + "%";
   }
 
-  html += `</table>`;
+  html += "</table>";
   output.innerHTML = html;
+  document.querySelector(".progress-container").style.display = "none";
 }
 
 // =============================================================
@@ -88,20 +122,16 @@ async function loadStats() {
 async function runDiag() {
   const output = document.getElementById("output");
   const resultSnap = await getDocs(collection(db, "results"));
-
   let html = `<h3>Диагностика</h3>`;
   html += `Всего документов в results: ${resultSnap.size}<br><br>`;
-
   for (let d of resultSnap.docs) {
     html += `<b>${d.id}</b><br>`;
-    for (let testId of testIds) {
-      const attemptsCol = collection(db, `results/${d.id}/${testId}_attempts`);
-      const snap = await getDocs(attemptsCol);
-      html += `&nbsp;&nbsp;${testId}: ${snap.size} записей<br>`;
+    for (let t of allTests) {
+      const snap = await getDocs(collection(db, `results/${d.id}/${t.id}_attempts`));
+      html += `&nbsp;&nbsp;${t.id}: ${snap.size} записей<br>`;
     }
     html += `<br>`;
   }
-
   output.innerHTML = html;
 }
 
@@ -111,69 +141,44 @@ async function runDiag() {
 async function showVisits() {
   const output = document.getElementById("output");
   output.innerHTML = "Загрузка посещений...";
-
   const visitsSnap = await getDocs(collection(db, "visits"));
-
-  const days = {};  // день → количество посещений
-
+  const days = {};
   visitsSnap.forEach(doc => {
     const data = doc.data();
     const ts = data.timestamp?.toDate ? data.timestamp.toDate() : null;
     if (!ts) return;
-
     const day = ts.toISOString().split("T")[0];
-    days[day] = (days[day] || 0) + 1;
+    days[day] = (days[day]||0)+1;
   });
-
   let html = `<h3>Сводная статистика посещений по дням</h3>`;
-  html += `<table border="1" cellpadding="6">
-           <tr><th>Дата</th><th>Количество посещений</th></tr>`;
-
-  Object.keys(days).sort().forEach(day => {
-    html += `<tr><td>${day}</td><td>${days[day]}</td></tr>`;
-  });
-
-  html += `</table>`;
+  html += `<table><tr><th>Дата</th><th>Количество посещений</th></tr>`;
+  Object.keys(days).sort().forEach(day=>html+=`<tr><td>${day}</td><td>${days[day]}</td></tr>`);
+  html += "</table>";
   output.innerHTML = html;
 }
 
 // =============================================================
-// 📌 Подробная статистика посещений (каждая запись)
+// 📌 Подробная статистика посещений
 // =============================================================
 async function showVisitsDetailed() {
   const output = document.getElementById("output");
   output.innerHTML = "Загрузка подробных данных...";
-
   const visitsSnap = await getDocs(collection(db, "visits"));
-
   const rows = [];
-
-  visitsSnap.forEach(doc => {
+  visitsSnap.forEach(doc=>{
     const data = doc.data();
     const ts = data.timestamp?.toDate ? data.timestamp.toDate() : null;
-    if (!ts) return;
-
-    rows.push({
-      ip: data.ip || "неизвестно",
-      ts,
-      day: ts.toISOString().split("T")[0],
-      time: ts.toTimeString().split(" ")[0]
-    });
+    if(!ts) return;
+    rows.push({ ip:data.ip||"неизвестно", day: ts.toISOString().split("T")[0], time: ts.toTimeString().split(" ")[0] });
   });
-
-  // сортировка по времени
-  rows.sort((a, b) => a.ts - b.ts);
-
+  rows.sort((a,b)=>a.day.localeCompare(b.day));
   let html = `<h3>Подробная статистика посещений</h3>`;
-  html += `<table border="1" cellpadding="6">
-           <tr><th>IP</th><th>Дата</th><th>Время</th></tr>`;
-
-  rows.forEach(r => {
-    html += `<tr><td>${r.ip}</td><td>${r.day}</td><td>${r.time}</td></tr>`;
-  });
-
-  html += `</table>`;
+  html += `<table><tr><th>IP</th><th>Дата</th><th>Время</th></tr>`;
+  rows.forEach(r=>html+=`<tr><td>${r.ip}</td><td>${r.day}</td><td>${r.time}</td></tr>`);
+  html += "</table>";
   output.innerHTML = html;
 }
-
 </script>
+
+</body>
+</html>
