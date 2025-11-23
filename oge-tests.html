@@ -31,12 +31,20 @@ h1 { text-align: center; }
 </head>
 <body>
 
+<!-- Кнопка возврата на главную -->
+<div style="text-align:center; margin-bottom:20px;">
+  <button onclick="location.href='index.html'" style="padding:10px 20px; font-size:16px; cursor:pointer;">
+    ← На главную
+  </button>
+</div>
+
 <h1>OGE Tests – Выберите уровень</h1>
 
 <div class="levels">
   <button data-level="1">Уровень 1</button>
   <button data-level="2">Уровень 2</button>
   <button data-level="3">Уровень 3</button>
+  <button data-level="4">Уровень 4</button>
   <button data-level="random">Случайные тесты</button>
 </div>
 
@@ -85,16 +93,16 @@ async function loadTests() {
 }
 await loadTests();
 
-// ===== Генерация карточек =====
+// ===== Генерация карточек с нумерацией =====
 function renderCards(testArray) {
-  console.log("Отображаем карточки тестов:", testArray);
   const menu = document.getElementById('test-menu');
   menu.innerHTML = '';
-  testArray.forEach(t => {
+  testArray.forEach((t, index) => {
     const card = document.createElement('a');
     card.className = 'card';
     card.href = `test.html?id=${t.id}`;
-    card.innerHTML = `<h3>${t.title}</h3><p>Уровень: ${t.level}</p>`;
+    card.innerHTML = `<h3>${index + 1}. ${t.title}</h3>
+                      <p>Тема: ${t.topic} | Уровень: ${t.level}</p>`;
     menu.appendChild(card);
   });
 }
@@ -106,7 +114,7 @@ document.querySelectorAll('.levels button').forEach(btn => {
     console.log("Нажат уровень:", level);
 
     if(level === 'random') {
-      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[])];
+      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[]), ...(tests["4"]||[])];
       currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
     } else {
       if(!Array.isArray(tests[level])) {
@@ -122,10 +130,11 @@ document.querySelectorAll('.levels button').forEach(btn => {
 
 // ===== Статистика =====
 async function showStats() {
+  if(!currentUser) return;
   const statsDiv = document.getElementById('stats');
   let html = '<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Дата</th></tr>';
 
-  for(const lvl of ["1","2","3"]) {
+  for(const lvl of ["1","2","3","4"]) {
     const arr = tests[lvl];
     if(!Array.isArray(arr)) continue;
     for(const t of arr) {

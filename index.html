@@ -7,6 +7,7 @@
 <style>
 body { font-family: Arial, sans-serif; margin: 20px; max-width: 900px; }
 h1 { text-align: center; }
+
 .auth-box { max-width: 400px; margin: 0 auto; }
 input, button { width: 100%; padding: 10px; margin: 5px 0; font-size: 16px; }
 button { cursor: pointer; }
@@ -26,9 +27,10 @@ button { cursor: pointer; }
 }
 .menu .card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
 
-#stats { margin-top: 30px; overflow-x: auto; }
-#stats table { width: 100%; border-collapse: collapse; }
-#stats th, #stats td { border: 1px solid #333; padding: 8px; text-align: center; }
+#stats-container { margin-top: 30px; overflow-x: auto; }
+#stats-container table { width: 100%; border-collapse: collapse; }
+#stats-container th, #stats-container td { border: 1px solid #333; padding: 8px; text-align: center; }
+
 .progress-container { background: #eee; border-radius: 5px; overflow: hidden; height: 20px; margin-top: 5px; }
 .progress-bar { height: 100%; background: linear-gradient(90deg, #4CAF50, #81C784); width: 0%; text-align: center; color: white; font-weight: bold; }
 
@@ -43,16 +45,16 @@ button { cursor: pointer; }
 
 <h1>English OGE Tests</h1>
 
-<div style="margin-top: 20px;">
-  <button onclick="location.href='OGE_English_Guide.html'" 
-          style="padding:10px 20px; font-size:16px; cursor:pointer;">
-    📖 Шпаргалка по ОГЭ
-  </button>
-  <p style="font-size:14px; color:#555; max-width:500px;">
-    Нажмите на кнопку, чтобы открыть компактную шпаргалку с основными разделами ОГЭ по английскому: аудирование, чтение, грамматика, письмо и устная часть. Подходит для быстрого повторения перед экзаменом.
-  </p>
+<div style="margin-top: 20px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+  <button onclick="location.href='kids.html'" style="padding:10px 20px; font-size:16px;"> 🐶 Аглийский для детей</button>
+  <button onclick="location.href='OGE_English_Guide.html'" style="padding:10px 20px; font-size:16px;">📖 Шпаргалка по ОГЭ</button>
+  <button onclick="location.href='oge-tests.html'" style="padding:10px 20px; font-size:16px;">📝 Перейти к тестам</button>
 </div>
+<p style="font-size:14px; color:#555; max-width:500px; margin: 10px auto;">
+  Тесты по английскому для ОГЭ. Сюда входят базовые 5 тестов и новые 70 тестов из JSON.
+</p>
 
+<!-- Авторизация -->
 <div class="auth-box" id="auth">
   <h3>Авторизация</h3>
   <input type="email" id="email" placeholder="Email">
@@ -63,23 +65,32 @@ button { cursor: pointer; }
   <div id="auth-msg"></div>
 </div>
 
-<div class="menu">
-  <a href="test1.html" class="card" target="_blank">Test 1: Alice & Tom</a>
-  <a href="test2.html" class="card" target="_blank">Test 2: Sports</a>
-  <a href="test3.html" class="card" target="_blank">Test 3: Holidays</a>
-  <a href="test4.html" class="card" target="_blank">Test 4: Environment</a>
-  <a href="test5.html" class="card" target="_blank">Test 5: Daily Life</a>
+<!-- Базовые тесты -->
+<h2>Базовые тесты</h2>
+<div class="menu" id="base-tests">
+  <a href="test1.html" class="card" target="_blank">1. Alice & Tom</a>
+  <a href="test2.html" class="card" target="_blank">2. Sports</a>
+  <a href="test3.html" class="card" target="_blank">3. Holidays</a>
+  <a href="test4.html" class="card" target="_blank">4. Environment</a>
+  <a href="test5.html" class="card" target="_blank">5. Daily Life</a>
 </div>
 
-<div id="stats">Войдите, чтобы увидеть статистику.</div>
+<!-- Новые тесты из JSON -->
+<h2>Новые тесты</h2>
+<div class="menu" id="json-tests"></div>
+
+<!-- Кнопка для показа статистики -->
+<button id="show-stats-btn" style="margin-top:20px;">📊 Показать статистику</button>
+<div id="stats-loader" style="display:none; margin-top:10px;">Загрузка статистики… ⏳</div>
+<div id="stats-container"></div>
 <canvas id="scoreChart"></canvas>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ===== Firebase конфиг и инициализация =====
+// ===== Firebase =====
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -89,64 +100,67 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ----------------------
-// Функция логирования посещения
-// ----------------------
-async function logVisit() {
-  try {
-    await addDoc(collection(db, "visits"), {
-      timestamp: serverTimestamp(),
-      page: "index.html",
-      userAgent: navigator.userAgent,
-      referrer: document.referrer
-    });
-    console.log("Visit logged successfully");
-  } catch (err) {
-    console.error("Error logging visit:", err);
-  }
-}
-
-// Вызываем при загрузке страницы
-logVisit();
-
-// ----------------------
-// Авторизация и статистика
-// ----------------------
+// Авторизация
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const registerBtn = document.getElementById("register-btn");
 const loginBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const authMsg = document.getElementById("auth-msg");
-const statsDiv = document.getElementById("stats");
+
+// Статистика
+const statsBtn = document.getElementById("show-stats-btn");
+const statsLoader = document.getElementById("stats-loader");
+const statsDiv = document.getElementById("stats-container");
 const chartCanvas = document.getElementById("scoreChart");
-
 let scoreChartInstance = null;
-const testIds = ["test1","test2","test3","test4","test5"];
-const maxPointsByTest = { test1:3, test2:3, test3:5, test4:3, test5:5 };
 
-// ===== Регистрация =====
+// JSON тесты
+let testsJSON = {};
+
+async function loadTestsJSON(){
+  try {
+    const res = await fetch('tests.json');
+    testsJSON = await res.json();
+    renderJSONTests();
+  } catch(e){ console.error("Ошибка загрузки tests.json", e); }
+}
+await loadTestsJSON();
+
+// ===== Отображение JSON тестов =====
+function renderJSONTests(){
+  const container = document.getElementById("json-tests");
+  container.innerHTML = '';
+  let counter = 6; // нумерация после базовых 5 тестов
+  for(const level in testsJSON){
+    for(const test of testsJSON[level]){
+      const a = document.createElement('a');
+      a.href = `test.html?id=${test.id}`;
+      a.target = "_blank";
+      a.className = 'card';
+      a.innerText = `${counter}. ${test.title} (Уровень ${test.level})`;
+      container.appendChild(a);
+      counter++;
+    }
+  }
+}
+
+// ===== Авторизация =====
 registerBtn.addEventListener("click", async () => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
     const uid = userCredential.user.uid;
     authMsg.innerText = "Регистрация успешна!";
     await setDoc(doc(db, "results", uid), { created: new Date() });
-  } catch (err) {
-    authMsg.innerText = "Ошибка: " + err.message;
-  }
+  } catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
 });
-
-// ===== Вход =====
 loginBtn.addEventListener("click", async () => {
   try { await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value); authMsg.innerText = "Вход выполнен!"; } 
   catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
 });
-
-// ===== Выход =====
 logoutBtn.addEventListener("click", async () => { try { await signOut(auth); } catch (err) { alert("Ошибка выхода: " + err.message); } });
 
-// ===== Слежение за авторизацией =====
+// ===== Статистика по кнопке =====
 onAuthStateChanged(auth, async (user) => {
   if(user){
     emailInput.style.display="none";
@@ -155,70 +169,74 @@ onAuthStateChanged(auth, async (user) => {
     loginBtn.style.display="none";
     logoutBtn.style.display="inline";
     authMsg.innerText="Вы вошли как: "+user.email;
-    await showFullStats(user.uid);
   } else {
     emailInput.style.display="inline";
     passwordInput.style.display="inline";
     registerBtn.style.display="inline";
     loginBtn.style.display="inline";
     logoutBtn.style.display="none";
-    statsDiv.innerText="Войдите, чтобы увидеть статистику.";
+    statsDiv.innerHTML = '';
     chartCanvas.style.display="none";
   }
 });
 
+statsBtn.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if(!user) { alert("Сначала войдите!"); return; }
+  statsLoader.style.display = 'block';
+  await showFullStats(user.uid);
+  statsLoader.style.display = 'none';
+});
+
 // ===== Вывод статистики =====
 async function showFullStats(uid){
-  const testsData = {};
   const chartLabels = [], chartData = [];
-  let totalLastAttempts=0, totalMaxPoints=0;
-
-  for(let testId of testIds){
-    const attemptsCol = collection(db,"results",uid,`${testId}_attempts`);
-    const attemptsSnapshot = await getDocs(attemptsCol);
-    if(attemptsSnapshot.empty) continue;
-
-    const attemptsArray = attemptsSnapshot.docs.map(doc=>{
-      const data = doc.data();
-      return { score:data.score??0, date:data.date?.toDate?data.date.toDate():null };
-    });
-    attemptsArray.sort((a,b)=>a.date-b.date);
-    testsData[testId]=attemptsArray;
-
-    const lastAttempt=attemptsArray[attemptsArray.length-1];
-    totalLastAttempts+=lastAttempt.score;
-    totalMaxPoints+=maxPointsByTest[testId];
-
-    attemptsArray.forEach((a,idx)=>{
-      const dateStr=a.date?a.date.toLocaleString():"неизвестно";
-      chartLabels.push(`${testId}${idx===attemptsArray.length-1?' (последняя)':''} (${dateStr.split(',')[0]})`);
-      chartData.push(a.score);
-    });
-  }
-
-  // ===== Таблица с прогресс-барами =====
+  let totalScore=0, totalMax=0;
   let html="<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Прогресс</th></tr>";
-  for(let testId of testIds){
-    const attempts=testsData[testId]||[];
-    const lastScore = attempts.length>0?attempts[attempts.length-1].score:0;
-    const maxScore=maxPointsByTest[testId];
-    const percent = Math.round(lastScore/maxScore*100);
 
-    html+=`<tr><td>${testId}</td><td>${lastScore} / ${maxScore}</td>
-      <td>
-        <div class="progress-container">
-          <div class="progress-bar" style="width:${percent}%">${percent}%</div>
-        </div>
-      </td></tr>`;
+  // Базовые 5 тестов
+  const baseTests = [
+    {id:'test1', title:'Alice & Tom', maxPoints:3},
+    {id:'test2', title:'Sports', maxPoints:3},
+    {id:'test3', title:'Holidays', maxPoints:5},
+    {id:'test4', title:'Environment', maxPoints:3},
+    {id:'test5', title:'Daily Life', maxPoints:5},
+  ];
+
+  const allTests = [...baseTests];
+  for(const level in testsJSON){
+    allTests.push(...testsJSON[level].map(t=>({id:t.id, title:t.title, maxPoints:t.maxPoints ?? 5})));
   }
-  html+=`<tr><td><strong>Итого</strong></td><td>${totalLastAttempts} / ${totalMaxPoints}</td><td></td></tr></table>`;
-  statsDiv.innerHTML=html;
 
-  // ===== График =====
+  let loaded=0;
+  for(const test of allTests){
+    const attemptsCol = collection(db,"results",uid,`${test.id}_attempts`);
+    const snap = await getDocs(attemptsCol);
+    const lastScore = snap.empty ? 0 : snap.docs[snap.docs.length-1].data().score ?? 0;
+    const percent = Math.round(lastScore/test.maxPoints*100);
+
+    totalScore += lastScore;
+    totalMax += test.maxPoints;
+
+    html+=`<tr><td>${test.title}</td><td>${lastScore} / ${test.maxPoints}</td>
+      <td><div class="progress-container"><div class="progress-bar" style="width:${percent}%">${percent}%</div></div></td></tr>`;
+
+    chartLabels.push(test.title);
+    chartData.push(lastScore);
+
+    loaded++;
+    // обновляем прогрессбар
+    statsLoader.innerText = `Загрузка статистики… ${Math.round(loaded/allTests.length*100)}% ⏳`;
+  }
+
+  html+=`<tr><td><strong>Итого</strong></td><td>${totalScore} / ${totalMax}</td><td></td></tr></table>`;
+  statsDiv.innerHTML = html;
+
+  // Chart.js
   if(chartData.length>0){
     chartCanvas.style.display="block";
     if(scoreChartInstance) scoreChartInstance.destroy();
-    scoreChartInstance=new Chart(chartCanvas,{
+    scoreChartInstance = new Chart(chartCanvas,{
       type:'line',
       data:{ labels:chartLabels, datasets:[{label:'Баллы', data:chartData, borderColor:'blue', fill:false, tension:0.2}] },
       options:{ responsive:true }
