@@ -55,4 +55,307 @@
   {"id":"t49","title":"Transport 3","level":3,"maxPoints":5,"text":"People travel by buses, trains, and bicycles. Using public transport helps reduce pollution and traffic.","questions":[{"type":"radio","text":"Which transport do people use?","options":["Buses, trains, bicycles","Cars only","Planes only"],"answer":"Buses, trains, bicycles"},{"type":"radio","text":"Public transport reduces ___","options":["Pollution and traffic","Noise","Boredom"],"answer":"Pollution and traffic"},{"type":"text","text":"People ride ___ in cities.","answer":"bicycles"},{"type":"radio","text":"Is public transport helpful?","options":["Yes","No","Sometimes"],"answer":"Yes"},{"type":"radio","text":"Reducing traffic is ___ advantage.","options":["Main","Minor","Useless"],"answer":"Main"}]},
   {"id":"t50","title":"Holidays 3","level":3,"maxPoints":5,"text":"Anna enjoys winter holidays. She goes skiing, builds snowmen, and drinks hot chocolate.","questions":[{"type":"radio","text":"What does Anna enjoy?","options":["Winter holidays","Summer holidays","Autumn holidays"],"answer":"Winter holidays"},{"type":"radio","text":"Which activity does she do?","options":["Skiing and building snowmen","Swimming","Sunbathing"],"answer":"Skiing and building snowmen"},{"type":"text","text":"Anna drinks ___ during holidays.","answer":"hot chocolate"},{"type":"radio","text":"Does she enjoy winter sports?","options":["Yes","No","Sometimes"],"answer":"Yes"},{"type":"radio","text":"Winter holidays are ___ for Anna.","options":["Fun","Boring","Sad"],"answer":"Fun"}]}
 	]
+	{
+  "4": [
+    {
+      "id": "t51",
+      "title": "Environment 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Climate change affects the whole planet. Scientists warn that rising temperatures cause melting glaciers, extreme weather, and endangered species. People can reduce their carbon footprint by recycling, using public transport, and saving energy at home.",
+      "questions": [
+        {"type": "radio", "text": "What is a major effect of climate change?", "options": ["Melting glaciers","More holidays","Internet growth"], "answer": "Melting glaciers"},
+        {"type": "text", "text": "Rising temperatures can cause ___ weather.", "answer": "extreme"},
+        {"type": "radio", "text": "Who warns about climate change?", "options": ["Scientists","Politicians","Athletes"], "answer": "Scientists"},
+        {"type": "text", "text": "People can reduce their carbon ___ by recycling.", "answer": "footprint"},
+        {"type": "radio", "text": "Which activity helps save energy at home?", "options": ["Turning off lights","Watching TV","Sleeping late"], "answer": "Turning off lights"},
+        {"type": "radio", "text": "Endangered species are affected by?", "options": ["Rising temperatures","Shopping malls","Sports events"], "answer": "Rising temperatures"}
+      ]
+    },
+    {
+      "id": "t52",
+      "title": "Daily Life 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "People’s daily routines can influence their health and productivity. A healthy day usually starts with exercise, a nutritious breakfast, and careful planning of tasks. Busy schedules may lead to stress, so it is important to include breaks and relaxation activities.",
+      "questions": [
+        {"type": "radio", "text": "What is a good way to start the day?", "options": ["Exercise","Watching TV","Sleeping longer"], "answer": "Exercise"},
+        {"type": "text", "text": "A nutritious ___ is important for health.", "answer": "breakfast"},
+        {"type": "radio", "text": "What can busy schedules cause?", "options": ["Stress","Happiness","Boredom"], "answer": "Stress"},
+        {"type": "text", "text": "People should include ___ activities to relax.", "answer": "relaxation"},
+        {"type": "radio", "text": "Daily planning helps improve?", "options": ["Productivity","Games","Internet speed"], "answer": "Productivity"},
+        {"type": "radio", "text": "Skipping exercise may lead to?", "options": ["Poor health","Better memory","Happiness"], "answer": "Poor health"}
+      ]
+    },
+    {
+      "id": "t53",
+      "title": "Technology 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Modern technology influences all aspects of life. Smartphones, computers, and the internet make communication easier and allow access to information. However, excessive use can lead to eye strain, poor posture, and less face-to-face interaction.",
+      "questions": [
+        {"type": "radio", "text": "Which devices improve communication?", "options": ["Smartphones and computers","Cars","Clothes"], "answer": "Smartphones and computers"},
+        {"type": "text", "text": "The internet allows easy access to ___ .", "answer": "information"},
+        {"type": "radio", "text": "Excessive technology use can cause?", "options": ["Eye strain","Superpowers","Weightlifting"], "answer": "Eye strain"},
+        {"type": "text", "text": "Less face-to-face ___ may result from using gadgets too much.", "answer": "interaction"},
+        {"type": "radio", "text": "Good technology use improves?", "options": ["Efficiency","Laziness","Forgetfulness"], "answer": "Efficiency"},
+        {"type": "radio", "text": "Poor posture may be caused by?", "options": ["Excessive device use","Reading books","Walking"], "answer": "Excessive device use"}
+      ]
+    },
+    {
+      "id": "t54",
+      "title": "Travel 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Traveling abroad helps people discover new cultures and traditions. Tourists often visit museums, historical sites, and natural landmarks. Learning basic phrases in the local language can improve communication and make trips more enjoyable.",
+      "questions": [
+        {"type": "radio", "text": "Why do people travel abroad?", "options": ["To discover cultures","To stay at home","To sleep"], "answer": "To discover cultures"},
+        {"type": "text", "text": "Tourists often visit museums and ___ sites.", "answer": "historical"},
+        {"type": "radio", "text": "Learning the local language helps?", "options": ["Communication","Watching TV","Cooking"], "answer": "Communication"},
+        {"type": "text", "text": "Natural ___ attract many travelers.", "answer": "landmarks"},
+        {"type": "radio", "text": "What makes trips more enjoyable?", "options": ["Using local phrases","Ignoring locals","Sleeping only"], "answer": "Using local phrases"},
+        {"type": "radio", "text": "Tourists learn about?", "options": ["Traditions","Video games","Cars"], "answer": "Traditions"}
+      ]
+    },
+    {
+      "id": "t55",
+      "title": "Food 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Healthy eating is essential for maintaining good health. Fruits, vegetables, whole grains, and proteins provide necessary vitamins and minerals. Fast food and sugary drinks should be consumed occasionally. Cooking at home allows better control of ingredients.",
+      "questions": [
+        {"type": "radio", "text": "Which foods provide vitamins and minerals?", "options": ["Fruits and vegetables","Chips","Candy"], "answer": "Fruits and vegetables"},
+        {"type": "text", "text": "Fast food and sugary drinks should be eaten ___.", "answer": "occasionally"},
+        {"type": "radio", "text": "Cooking at home helps control?", "options": ["Ingredients","Time for games","Internet speed"], "answer": "Ingredients"},
+        {"type": "text", "text": "Whole grains are a good source of ___.", "answer": "fiber"},
+        {"type": "radio", "text": "Healthy eating is important for?", "options": ["Good health","Watching movies","Sleeping more"], "answer": "Good health"},
+        {"type": "radio", "text": "Proteins provide?", "options": ["Amino acids","Sugar","Fat only"], "answer": "Amino acids"}
+      ]
+    },
+    {
+      "id": "t56",
+      "title": "Sports 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Regular physical activity strengthens the body, improves mood, and prevents illnesses. Different sports focus on endurance, strength, or flexibility. Team sports also teach cooperation, discipline, and strategic thinking.",
+      "questions": [
+        {"type": "radio", "text": "Physical activity improves?", "options": ["Mood","Internet speed","Watching TV"], "answer": "Mood"},
+        {"type": "text", "text": "Different sports focus on endurance, strength, or ___.", "answer": "flexibility"},
+        {"type": "radio", "text": "Team sports teach?", "options": ["Cooperation","Sleeping","Reading only"], "answer": "Cooperation"},
+        {"type": "text", "text": "Regular exercise prevents ___.", "answer": "illnesses"},
+        {"type": "radio", "text": "Strategic thinking is learned in?", "options": ["Team sports","Solo reading","Watching movies"], "answer": "Team sports"},
+        {"type": "radio", "text": "Discipline is gained through?", "options": ["Sports","Playing video games","Sleeping"], "answer": "Sports"}
+      ]
+    },
+    {
+      "id": "t57",
+      "title": "History 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "History helps us understand the past and learn from it. Ancient civilizations like Egypt and Greece influenced art, science, and politics. Museums and historical sites allow people to explore these cultures and their achievements.",
+      "questions": [
+        {"type": "radio", "text": "History helps us?", "options": ["Understand the past","Play games","Cook better"], "answer": "Understand the past"},
+        {"type": "text", "text": "Ancient civilizations influenced art, science, and ___.", "answer": "politics"},
+        {"type": "radio", "text": "Museums allow people to?", "options": ["Explore cultures","Play sports","Sleep"], "answer": "Explore cultures"},
+        {"type": "text", "text": "Egypt and ___ were ancient civilizations.", "answer": "Greece"},
+        {"type": "radio", "text": "Learning history helps prevent?", "options": ["Mistakes","Exercise","Boredom"], "answer": "Mistakes"},
+        {"type": "radio", "text": "Historical sites teach about?", "options": ["Achievements","Movies","Games"], "answer": "Achievements"}
+      ]
+    },
+    {
+      "id": "t58",
+      "title": "Health 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Mental health is as important as physical health. Stress, poor sleep, and unhealthy diets can negatively affect mood and energy levels. Regular relaxation, hobbies, and socializing improve mental well-being.",
+      "questions": [
+        {"type": "radio", "text": "Mental health is as important as?", "options": ["Physical health","Internet speed","Watching TV"], "answer": "Physical health"},
+        {"type": "text", "text": "Stress and poor ___ affect energy levels.", "answer": "sleep"},
+        {"type": "radio", "text": "Hobbies help improve?", "options": ["Mental well-being","Weight only","Gaming skills"], "answer": "Mental well-being"},
+        {"type": "text", "text": "Socializing helps reduce ___.", "answer": "stress"},
+        {"type": "radio", "text": "Unhealthy diets negatively affect?", "options": ["Mood","Memory","Video skills"], "answer": "Mood"},
+        {"type": "radio", "text": "Relaxation contributes to?", "options": ["Better mental health","Faster running","Cooking skills"], "answer": "Better mental health"}
+      ]
+    },
+    {
+      "id": "t59",
+      "title": "Transport 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Modern transport includes cars, trains, and airplanes. Efficient transport reduces travel time but may cause pollution. Using public transport or bicycles can reduce traffic and environmental impact.",
+      "questions": [
+        {"type": "radio", "text": "Efficient transport reduces?", "options": ["Travel time","Fun","Shopping"], "answer": "Travel time"},
+        {"type": "text", "text": "Transport may cause ___ if overused.", "answer": "pollution"},
+        {"type": "radio", "text": "Bicycles reduce?", "options": ["Traffic","Games","Internet use"], "answer": "Traffic"},
+        {"type": "text", "text": "Airplanes are part of ___ transport.", "answer": "modern"},
+        {"type": "radio", "text": "Public transport helps protect?", "options": ["Environment","TV shows","Fast food"], "answer": "Environment"},
+        {"type": "radio", "text": "Trains and cars are types of?", "options": ["Transport","Music","Furniture"], "answer": "Transport"}
+      ]
+    },
+    {
+      "id": "t60",
+      "title": "Books 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Reading books develops imagination and knowledge. Fiction teaches empathy and creativity, while non-fiction provides facts and skills. Libraries and digital books make reading accessible to everyone.",
+      "questions": [
+        {"type": "radio", "text": "Reading improves?", "options": ["Imagination","Watching TV","Sleeping"], "answer": "Imagination"},
+        {"type": "text", "text": "Fiction teaches ___ and creativity.", "answer": "empathy"},
+        {"type": "radio", "text": "Non-fiction provides?", "options": ["Facts and skills","Stories only","Games"], "answer": "Facts and skills"},
+        {"type": "text", "text": "Libraries make reading ___ to everyone.", "answer": "accessible"},
+        {"type": "radio", "text": "Digital books help?", "options": ["Reading accessibility","Cooking","Exercising"], "answer": "Reading accessibility"},
+        {"type": "radio", "text": "Books help develop?", "options": ["Knowledge","Games","Sleep"], "answer": "Knowledge"}
+      ]
+    },
+	{
+      "id": "t61",
+      "title": "Science 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Science helps us understand the world. Experiments, observations, and theories explain natural phenomena. Discoveries in physics, chemistry, and biology improve technology, medicine, and daily life.",
+      "questions": [
+        {"type": "radio", "text": "Science explains?", "options": ["Natural phenomena","Movies","Sports"], "answer": "Natural phenomena"},
+        {"type": "text", "text": "Experiments and ___ help scientists learn.", "answer": "observations"},
+        {"type": "radio", "text": "Physics, chemistry, and biology are?", "options": ["Science fields","Music genres","Games"], "answer": "Science fields"},
+        {"type": "text", "text": "Discoveries improve ___ and medicine.", "answer": "technology"},
+        {"type": "radio", "text": "Theories are based on?", "options": ["Evidence","Opinion","Dreams"], "answer": "Evidence"},
+        {"type": "radio", "text": "Science affects?", "options": ["Daily life","Sleep only","Cooking only"], "answer": "Daily life"}
+      ]
+    },
+    {
+      "id": "t62",
+      "title": "Art 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Art allows people to express emotions and ideas. Painting, music, theatre, and dance develop creativity. Museums, galleries, and performances let audiences appreciate different styles and cultures.",
+      "questions": [
+        {"type": "radio", "text": "Art helps express?", "options": ["Emotions and ideas","Shopping lists","Games"], "answer": "Emotions and ideas"},
+        {"type": "text", "text": "Music, theatre, and dance develop ___.", "answer": "creativity"},
+        {"type": "radio", "text": "Museums and galleries allow?", "options": ["Appreciation of styles","Watching TV","Sleeping"], "answer": "Appreciation of styles"},
+        {"type": "text", "text": "Performances show different ___ and cultures.", "answer": "styles"},
+        {"type": "radio", "text": "Painting is a form of?", "options": ["Art","Sport","Science"], "answer": "Art"},
+        {"type": "radio", "text": "Art helps people understand?", "options": ["Feelings","Movies","Weather"], "answer": "Feelings"}
+      ]
+    },
+    {
+      "id": "t63",
+      "title": "Media 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Media includes newspapers, television, radio, and the internet. It informs, educates, and entertains people. Critical thinking is important because not all information is accurate or reliable.",
+      "questions": [
+        {"type": "radio", "text": "Media can?", "options": ["Inform, educate, entertain","Cook food","Play sports"], "answer": "Inform, educate, entertain"},
+        {"type": "text", "text": "Critical ___ helps identify reliable information.", "answer": "thinking"},
+        {"type": "radio", "text": "Newspapers, TV, and radio are types of?", "options": ["Media","Games","Furniture"], "answer": "Media"},
+        {"type": "text", "text": "Not all information is ___.", "answer": "accurate"},
+        {"type": "radio", "text": "Media educates people by?", "options": ["Providing knowledge","Watching movies","Playing games"], "answer": "Providing knowledge"},
+        {"type": "radio", "text": "Internet is part of?", "options": ["Media","Cooking","Sleeping"], "answer": "Media"}
+      ]
+    },
+    {
+      "id": "t64",
+      "title": "Weather 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Weather changes every day and affects our plans. Rain, snow, wind, and sunshine influence clothing, transportation, and mood. Weather forecasts help people prepare and stay safe.",
+      "questions": [
+        {"type": "radio", "text": "Weather affects?", "options": ["Plans","Games","Music"], "answer": "Plans"},
+        {"type": "text", "text": "Rain, snow, wind, and ___ are types of weather.", "answer": "sunshine"},
+        {"type": "radio", "text": "Forecasts help people?", "options": ["Prepare and stay safe","Cook food","Sleep"], "answer": "Prepare and stay safe"},
+        {"type": "text", "text": "Clothing depends on ___.", "answer": "weather"},
+        {"type": "radio", "text": "Weather can influence?", "options": ["Mood","Movies","Internet"], "answer": "Mood"},
+        {"type": "radio", "text": "Wind and rain are examples of?", "options": ["Weather","Games","Furniture"], "answer": "Weather"}
+      ]
+    },
+    {
+      "id": "t65",
+      "title": "Animals 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Animals live in different habitats like forests, deserts, and oceans. They have unique behaviors and diets. Protecting wildlife and natural habitats is important for biodiversity and ecosystem balance.",
+      "questions": [
+        {"type": "radio", "text": "Animals live in?", "options": ["Forests, deserts, oceans","Houses","Cars"], "answer": "Forests, deserts, oceans"},
+        {"type": "text", "text": "Animals have unique ___ and diets.", "answer": "behaviors"},
+        {"type": "radio", "text": "Protecting wildlife helps?", "options": ["Biodiversity","Watching TV","Cooking"], "answer": "Biodiversity"},
+        {"type": "text", "text": "Ecosystem ___ depends on natural habitats.", "answer": "balance"},
+        {"type": "radio", "text": "Deserts are a type of?", "options": ["Habitat","Food","Clothing"], "answer": "Habitat"},
+        {"type": "radio", "text": "Wildlife protection is important for?", "options": ["Nature","Games","Internet"], "answer": "Nature"}
+      ]
+    },
+    {
+      "id": "t66",
+      "title": "Jobs 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Jobs provide income and purpose. Different professions require skills, education, and experience. Teamwork, responsibility, and communication are valuable in any workplace.",
+      "questions": [
+        {"type": "radio", "text": "Jobs provide?", "options": ["Income and purpose","Games","Movies"], "answer": "Income and purpose"},
+        {"type": "text", "text": "Professions require skills, education, and ___.", "answer": "experience"},
+        {"type": "radio", "text": "Teamwork is important in?", "options": ["Any workplace","Movies","Internet"], "answer": "Any workplace"},
+        {"type": "text", "text": "Responsibility is a key ___ in jobs.", "answer": "skill"},
+        {"type": "radio", "text": "Communication helps in?", "options": ["Work","Watching TV","Sleeping"], "answer": "Work"},
+        {"type": "radio", "text": "Education is needed for?", "options": ["Different professions","Games","Music"], "answer": "Different professions"}
+      ]
+    },
+    {
+      "id": "t67",
+      "title": "Education 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Education gives knowledge, skills, and critical thinking. Schools, online courses, and books help people learn. Lifelong learning is important for personal growth and adapting to change.",
+      "questions": [
+        {"type": "radio", "text": "Education provides?", "options": ["Knowledge and skills","Games","Sleep"], "answer": "Knowledge and skills"},
+        {"type": "text", "text": "Online courses and books help people ___.", "answer": "learn"},
+        {"type": "radio", "text": "Lifelong learning helps?", "options": ["Personal growth","Movies","Internet"], "answer": "Personal growth"},
+        {"type": "text", "text": "Education develops critical ___.", "answer": "thinking"},
+        {"type": "radio", "text": "Schools are part of?", "options": ["Education","Sports","Cooking"], "answer": "Education"},
+        {"type": "radio", "text": "Learning helps people adapt to?", "options": ["Change","Games","Sleep"], "answer": "Change"}
+      ]
+    },
+    {
+      "id": "t68",
+      "title": "Festivals 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Festivals celebrate culture, traditions, and religion. People enjoy music, food, dances, and ceremonies. Participating in festivals strengthens community bonds and creates happy memories.",
+      "questions": [
+        {"type": "radio", "text": "Festivals celebrate?", "options": ["Culture and traditions","Games","TV shows"], "answer": "Culture and traditions"},
+        {"type": "text", "text": "People enjoy music, food, dances, and ___.", "answer": "ceremonies"},
+        {"type": "radio", "text": "Festivals strengthen?", "options": ["Community bonds","Sleeping","Movies"], "answer": "Community bonds"},
+        {"type": "text", "text": "Participating in festivals creates ___ memories.", "answer": "happy"},
+        {"type": "radio", "text": "Festivals are related to?", "options": ["Culture","Internet","Cooking"], "answer": "Culture"},
+        {"type": "radio", "text": "Ceremonies are part of?", "options": ["Festivals","Games","Music"], "answer": "Festivals"}
+      ]
+    },
+    {
+      "id": "t69",
+      "title": "Space 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "Space is a vast area beyond Earth. Planets, stars, and galaxies exist in the universe. Astronomy studies these objects and phenomena. Space exploration helps understand Earth and develop new technology.",
+      "questions": [
+        {"type": "radio", "text": "Space is beyond?", "options": ["Earth","Mountains","Oceans"], "answer": "Earth"},
+        {"type": "text", "text": "Astronomy studies planets, stars, and ___.", "answer": "galaxies"},
+        {"type": "radio", "text": "Space exploration helps?", "options": ["Understand Earth","Cook food","Sleep"], "answer": "Understand Earth"},
+        {"type": "text", "text": "The universe contains many ___.", "answer": "objects"},
+        {"type": "radio", "text": "Studying space develops?", "options": ["Technology","Games","Movies"], "answer": "Technology"},
+        {"type": "radio", "text": "Stars and planets are part of?", "options": ["Space","Games","Education"], "answer": "Space"}
+      ]
+    },
+    {
+      "id": "t70",
+      "title": "Internet 4",
+      "level": 4,
+      "maxPoints": 6,
+      "text": "The internet connects people worldwide. It provides information, communication, and entertainment. Safe and responsible use is necessary to avoid misinformation, privacy risks, and addiction.",
+      "questions": [
+        {"type": "radio", "text": "The internet connects?", "options": ["People worldwide","Cars","Food"], "answer": "People worldwide"},
+        {"type": "text", "text": "Safe use prevents privacy ___ and addiction.", "answer": "risks"},
+        {"type": "radio", "text": "The internet provides?", "options": ["Information and communication","Cooking","Sleeping"], "answer": "Information and communication"},
+        {"type": "text", "text": "Misinformation online can cause ___.", "answer": "problems"},
+        {"type": "radio", "text": "Responsible use avoids?", "options": ["Addiction","Happiness","Games"], "answer": "Addiction"},
+        {"type": "radio", "text": "Internet gives access to?", "options": ["Entertainment","Sports only","Cars only"], "answer": "Entertainment"}
+      ]
+    }
+  ]
 }
