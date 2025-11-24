@@ -50,14 +50,31 @@ h1 { text-align: center; }
 
 <div class="menu" id="test-menu"></div>
 
-<div id="stats">Войдите, чтобы увидеть статистику.</div>
+<div id="stats"></div>
+
+<div style="text-align:center; margin-top:20px;">
+  <button id="loadStatsBtn" style="padding:10px 20px; font-size:16px; display:none;">
+    Показать статистику
+  </button>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs 
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ===== Firebase =====
+
+// ===============================
+//  Firebase Init
+// ===============================
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -68,32 +85,167 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
+let statsLoaded = false;
+
+
+// ===============================
+//  DOM элементы
+// ===============================
+const statsDiv = document.getElementById("stats");
+const loadStatsBtn = document.getElementById("loadStatsBtn");
+
+
+// ===============================
+//  Форма логина
+// ===============================
+function showLoginForm() {
+  statsDiv.innerHTML = `
+    <h2>Вход</h2>
+    <input id="email" type="email" placeholder="Email" style="width:100%;padding:8px;margin:5px 0;">
+    <input id="password" type="password" placeholder="Пароль" style="width:100%;padding:8px;margin:5px 0;">
+    <button id="loginBtn" style="padding:10px 15px;margin-top:10px;">Войти</button>
+    <p id="loginError" style="color:red;"></p>
+  `;
+
+  document.getElementById("loginBtn").onclick = async () => {
+    const email = document.getElementById("email").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    const err = document.getElementById("loginError");
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (e) {
+      err.textContent = "Ошибка: " + e.message;
+    }
+  };
+}
+
+
+// ===============================
+//  Показ кнопки статистики
+// ===============================
+function showStatsButton() {
+  statsDiv.innerHTML = "<p>Нажмите, чтобы загрузить статистику.</p>";
+  loadStatsBtn.style.display = "inline-block";
+}
+
+
+// ===============================
+//  Прогресс загрузки
+// ===============================
+function showLoading() {
+  statsDiv.innerHTML = `
+    <div style="text-align:center; padding:20px;">
+      <div style="
+        border: 4px solid #ccc; 
+        border-top: 4px solid #333; 
+        border-radius: 50%; 
+        width: 40px; 
+        height: 40px; 
+        margin: 0 auto;
+        animation: spin 0.8s linear infinite;
+      "></div>
+      <p>Загрузка...</p>
+    </div>
+
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  `;
+}
+
+
+// ===============================
+//  Загрузка статистики
+// ===============================
+async function loadStats() {
+  if (!currentUser) return;
+
+  if (statsLoaded) return;      // не грузим повторно
+  statsLoaded = true;
+
+  showLoading();
+
+  let html = `
+    <h2>История результатов</h2>
+    <table>
+      <tr><th>Тест</th><th>Баллы</th><th>Дата</th></tr>
+    `;
+
+  for (const lvl of ["1", "2", "3", "4"]) {
+    const arr = tests[lvl];
+    if (!Array.isArray(arr)) continue;
+
+    for (const t of arr) {
+      try {
+        const colRef = collection(db, "results", currentUser.uid, `${t.id}_attempts`);
+        const snap = await getDocs(colRef);
+        if (snap.empty) continue;
+
+        const last = snap.docs[snap.docs.length - 1].data();
+        const dateStr = last.date?.toDate ? last.date.toDate().toLocaleString() : "";
+
+        html += `<tr>
+          <td>${t.title}</td>
+          <td>${last.score} / ${t.maxPoints}</td>
+          <td>${dateStr}</td>
+        </tr>`;
+      } catch (e) {
+        console.error("Ошибка чтения статистики", e);
+      }
+    }
+  }
+
+  html += "</table>";
+  statsDiv.innerHTML = html;
+}
+
+
+// ===============================
+//  Firebase: отслеживание логина
+// ===============================
 onAuthStateChanged(auth, user => {
   currentUser = user;
-  if(currentUser) {
+
+  if (currentUser) {
     console.log("Пользователь вошёл:", currentUser.email);
-    showStats();
+    showStatsButton();
   } else {
-    console.log("Пользователь не вошёл");
+    console.log("Пользователь не авторизован");
+    loadStatsBtn.style.display = "none";
+    showLoginForm();
   }
 });
 
-let tests = {}; // сюда подгружаем JSON
-let currentLevelTests = [];
 
-// ===== Подгрузка JSON с тестами =====
+// ===============================
+//  Подключение кнопки загрузки
+// ===============================
+loadStatsBtn.onclick = () => loadStats();
+
+
+// ===============================
+//  Подгружаем JSON с тестами
+// ===============================
+let tests = {};
+
 async function loadTests() {
   try {
-    const res = await fetch('tests.json');
+    const res = await fetch("tests.json");
     tests = await res.json();
-    console.log("Тесты загружены:", tests);
-  } catch(err) {
-    console.error("Ошибка при загрузке JSON:", err);
+  } catch(e) {
+    console.error("Ошибка загрузки tests.json", e);
   }
 }
 await loadTests();
 
-// ===== Генерация карточек с нумерацией =====
+
+// ===============================
+//  Рендер кнопок тестов (как было)
+// ===============================
 function renderCards(testArray) {
   const menu = document.getElementById('test-menu');
   menu.innerHTML = '';
@@ -101,59 +253,28 @@ function renderCards(testArray) {
     const card = document.createElement('a');
     card.className = 'card';
     card.href = `test.html?id=${t.id}`;
-    card.innerHTML = `<h3>${index + 1}. ${t.title}</h3>
-                      <p>Тема: ${t.topic} | Уровень: ${t.level}</p>`;
+    card.innerHTML = `
+      <h3>${index + 1}. ${t.title}</h3>
+      <p>Тема: ${t.topic} | Уровень: ${t.level}</p>`;
     menu.appendChild(card);
   });
 }
 
-// ===== Обработчики выбора уровня =====
 document.querySelectorAll('.levels button').forEach(btn => {
   btn.addEventListener('click', () => {
     const level = btn.dataset.level;
-    console.log("Нажат уровень:", level);
+    let current = [];
 
-    if(level === 'random') {
-      const allTests = [...(tests["1"]||[]), ...(tests["2"]||[]), ...(tests["3"]||[]), ...(tests["4"]||[])];
-      currentLevelTests = allTests.sort(() => Math.random() - 0.5).slice(0, 5);
+    if (level === "random") {
+      const all = [...tests["1"], ...tests["2"], ...tests["3"], ...tests["4"]];
+      current = all.sort(() => Math.random() - 0.5).slice(0, 5);
     } else {
-      if(!Array.isArray(tests[level])) {
-        console.error("Тесты для уровня", level, "не массив или отсутствуют:", tests[level]);
-        currentLevelTests = [];
-      } else {
-        currentLevelTests = tests[level];
-      }
+      current = tests[level] || [];
     }
-    renderCards(currentLevelTests);
+
+    renderCards(current);
   });
 });
-
-// ===== Статистика =====
-async function showStats() {
-  if(!currentUser) return;
-  const statsDiv = document.getElementById('stats');
-  let html = '<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Дата</th></tr>';
-
-  for(const lvl of ["1","2","3","4"]) {
-    const arr = tests[lvl];
-    if(!Array.isArray(arr)) continue;
-    for(const t of arr) {
-      try {
-        const colRef = collection(db, "results", currentUser.uid, `${t.id}_attempts`);
-        const snap = await getDocs(colRef);
-        if(snap.empty) continue;
-        const last = snap.docs[snap.docs.length-1].data();
-        const dateStr = last.date?.toDate ? last.date.toDate().toLocaleString() : '';
-        html += `<tr><td>${t.title}</td><td>${last.score} / ${t.maxPoints}</td><td>${dateStr}</td></tr>`;
-      } catch(e) {
-        console.error("Ошибка при получении статистики для теста", t.id, e);
-      }
-    }
-  }
-
-  html += '</table>';
-  statsDiv.innerHTML = html;
-}
 </script>
 
 </body>
