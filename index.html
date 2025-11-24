@@ -107,7 +107,7 @@ const db = getFirestore(app);
 // === ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ ===
 async function logVisit() {
   try {
-    await addDoc(collection(db, "visits_main"), {
+    await addDoc(collection(db, "visits"), {
       timestamp: serverTimestamp(),
       page: window.location.pathname,
       userAgent: navigator.userAgent
