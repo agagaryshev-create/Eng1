@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>Admin — OGE stats</title>
+  <title>Admin — OGE stats (all users, same logic as index)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;padding:18px;max-width:1400px;margin:auto}
+    body{font-family:Arial,Helvetica,sans-serif;padding:18px;max-width:1200px;margin:auto}
     h1{margin-bottom:6px}
     .controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
     button{padding:8px 12px;font-size:14px;cursor:pointer}
@@ -23,7 +23,7 @@
 <body>
 
 <h1>Админка — статистика (все пользователи)</h1>
-<p class="note">Показ всех тестов по пользователям в табличной форме.</p>
+<p class="note">Эта страница использует ту же логику чтения результатов, что и index.html.</p>
 
 <div class="controls">
   <button id="btnAll">Загрузить статистику — все тесты</button>
@@ -44,9 +44,9 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ====== Firebase config ======
+// ===== Firebase config =====
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -64,95 +64,172 @@ function showProgress(show){
   progressWrap.style.display = show ? 'block' : 'none';
 }
 function setProgress(percent, text=''){
-  progressInner.style.width = Math.round(percent) + '%';
-  progressInner.innerText = Math.round(percent) + '%';
+  const p = Math.round(percent);
+  progressInner.style.width = p + '%';
+  progressInner.innerText = p + '%';
   progressText.innerText = text || '';
 }
 
-// ====== Base tests ======
-const baseTests = [
-  {id:'test1', title:'Alice & Tom', maxPoints:3},
-  {id:'test2', title:'Sports', maxPoints:3},
-  {id:'test3', title:'Holidays', maxPoints:5},
-  {id:'test4', title:'Environment', maxPoints:3},
-  {id:'test5', title:'Daily Life', maxPoints:5},
-];
+// === Helpers ===
+function convertTimestampToDate(timestamp) {
+  if (!timestamp) return null;
+  return new Date(timestamp.seconds * 1000);
+}
 
-// ====== Load tests JSON ======
-let testsJSON = {};
-async function loadTestsJSON(){
+// === Group by day (для посещений) ===
+function groupVisitsByDay(visits) {
+  const map = {};
+  visits.forEach(v => {
+    const dt = convertTimestampToDate(v.timestamp);
+    if(!dt) return;
+    const date = dt.toISOString().slice(0, 10);
+    map[date] = (map[date] || 0) + 1;
+  });
+  return map;
+}
+
+// === Render latest visits ===
+function renderLatestVisits(list, title="Последние посещения") {
+  let html = `<h3>${title} (${list.length})</h3>`;
+  html += `<table><thead><tr>
+              <th>Дата / время</th>
+              <th>User-Agent</th>
+           </tr></thead><tbody>`;
+  list.forEach(v => {
+    const dt = convertTimestampToDate(v.timestamp);
+    const dtFormatted = dt ? `${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU")}` : '—';
+    html += `<tr><td>${dtFormatted}</td><td><pre>${v.userAgent || "—"}</pre></td></tr>`;
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+
+// ==========================
+// ===== BUTTON 1 & 2 ======
+// ==========================
+async function getAllUserIds(){
+  const snap = await getDocs(collection(db, 'results'));
+  return snap.docs.map(d => d.id);
+}
+
+async function getUserTestAttempts(uid, testId){
+  try {
+    const snap = await getDocs(collection(db, "results", uid, `${testId}_attempts`));
+    if(snap.empty) return [];
+    return snap.docs.map(d=>({score:d.data().score, date:d.data().date}));
+  } catch(e){ console.error("Ошибка getUserTestAttempts:", e); return []; }
+}
+
+// Получаем список всех тестов
+async function getAllTests(){
+  // базовые тесты
+  const baseTests = [
+    {id:'test1', title:'Alice & Tom', maxPoints:3},
+    {id:'test2', title:'Sports', maxPoints:3},
+    {id:'test3', title:'Holidays', maxPoints:5},
+    {id:'test4', title:'Environment', maxPoints:3},
+    {id:'test5', title:'Daily Life', maxPoints:5},
+  ];
+  // новые тесты
+  let testsJSON = {};
   try {
     const res = await fetch('tests.json');
-    if(res.ok){
-      testsJSON = await res.json();
-    } else testsJSON = {};
-  } catch { testsJSON = {}; }
-}
-await loadTestsJSON();
-
-// ====== All tests array ======
-function getAllTests(baseOnly=false){
+    if(res.ok) testsJSON = await res.json();
+  } catch(e){ console.error("Ошибка загрузки tests.json", e);}
   let allTests = [...baseTests];
-  if(!baseOnly){
-    for(const level in testsJSON){
-      allTests.push(...testsJSON[level].map(t => ({id:t.id, title:t.title, maxPoints:t.maxPoints ?? 5})));
-    }
+  for(const level in testsJSON){
+    allTests.push(...testsJSON[level].map(t=>({id:t.id, title:t.title, maxPoints:t.maxPoints ?? 5})));
   }
   return allTests;
 }
 
-// ====== Get all users ======
-async function getAllUserIds(){
-  const snap = await getDocs(collection(db,'results'));
-  return snap.docs.map(d => d.id);
-}
-
-// ====== Get last attempt for test ======
-async function getLastAttempt(uid, testId){
-  try{
-    const attemptsCol = collection(db,'results',uid,`${testId}_attempts`);
-    const snap = await getDocs(attemptsCol);
-    if(snap.empty) return null;
-    return snap.docs[snap.docs.length-1].data();
-  }catch{ return null; }
-}
-
-// ====== Render table ======
-async function renderStats(baseOnly=false){
-  showProgress(true);
+// === Load all stats ===
+async function loadAllStats(filterBase=false){
   output.innerHTML = "Загрузка статистики…";
+  showProgress(true);
   const users = await getAllUserIds();
-  const allTests = getAllTests(baseOnly);
+  const tests = await getAllTests();
+  let html = `<table><thead><tr><th>User</th>`;
+  tests.forEach(t=>html+=`<th>${t.title}</th>`);
+  html += `<th>Сумма</th></tr></thead><tbody>`;
 
-  let html = "<table><thead><tr><th>User</th>";
-  allTests.forEach(t => html += `<th>${t.id}</th>`);
-  html += "<th>Итого</th></tr></thead><tbody>";
-
-  let userCount = 0;
-  for(const uid of users){
-    let totalScore = 0;
+  for(let i=0;i<users.length;i++){
+    const uid = users[i];
     html += `<tr><td>${uid}</td>`;
-    for(const t of allTests){
-      const attempt = await getLastAttempt(uid,t.id);
-      const score = attempt?.score ?? 0;
-      html += `<td>${score}/${t.maxPoints}</td>`;
-      totalScore += score;
+    let total=0;
+    for(let t of tests){
+      if(filterBase && !['test1','test2','test3','test4','test5'].includes(t.id)){
+        html += `<td>-</td>`;
+        continue;
+      }
+      const attempts = await getUserTestAttempts(uid, t.id);
+      const last = attempts.length ? attempts[attempts.length-1] : {score:0};
+      html += `<td>${last.score ?? 0}/${t.maxPoints}</td>`;
+      total += last.score ?? 0;
     }
-    html += `<td><strong>${totalScore}</strong></td>`;
-    html += "</tr>";
-    userCount++;
-    setProgress(userCount/users.length*100, `Загружено пользователей: ${userCount}/${users.length}`);
+    html += `<td>${total}</td></tr>`;
+    setProgress((i+1)/users.length*100, `Обработано ${i+1}/${users.length} пользователей`);
   }
 
-  html += "</tbody></table>";
+  html += `</tbody></table>`;
   output.innerHTML = html;
   showProgress(false);
 }
 
-// ====== BUTTONS ======
-document.getElementById('btnAll').addEventListener('click', ()=>renderStats(false));
-document.getElementById('btnBase').addEventListener('click', ()=>renderStats(true));
+// ==========================
+// ===== BUTTONS ============
+// ==========================
+document.getElementById('btnAll').addEventListener('click', ()=>loadAllStats(false));
+document.getElementById('btnBase').addEventListener('click', ()=>loadAllStats(true));
 
+// ==== Остальные кнопки оставляем как было ====
+document.getElementById('btnVisits').addEventListener('click', async ()=>{
+  output.innerHTML="Загрузка посещений…";
+  try{
+    const snap = await getDocs(collection(db,'visits'));
+    const visits = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const grouped = groupVisitsByDay(visits);
+    let html = `<h2>Посещения по дням</h2><table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
+    for(const day in grouped){ html+=`<tr><td>${day}</td><td>${grouped[day]}</td></tr>`;}
+    html += `</tbody></table>`;
+    output.innerHTML = html;
+  } catch(e){ console.error(e); output.innerHTML="<b>Ошибка загрузки посещений</b>"; }
+});
+
+document.getElementById('btnVisitsDetailed').addEventListener('click', async ()=>{
+  output.innerHTML="Загрузка подробной статистики посещений…";
+  try{
+    const q = query(collection(db,"visits"), orderBy("timestamp","desc"), limit(100));
+    const snap = await getDocs(q);
+    const visits = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    output.innerHTML = renderLatestVisits(visits, "Последние посещения");
+  } catch(e){ console.error(e); output.innerHTML="<b>Ошибка загрузки подробной статистики посещений</b>";}
+});
+
+// Кнопки Kids оставляем без изменений
+document.getElementById("btnKidsVisits").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка статистики Kids…";
+  try {
+    const snap = await getDocs(collection(db, 'visits_kids'));
+    const visits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const grouped = groupVisitsByDay(visits);
+    let html = `<h2>Kids — посещения по дням</h2><table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
+    for (const day in grouped) { html += `<tr><td>${day}</td><td>${grouped[day]}</td></tr>`; }
+    html += `</tbody></table>`;
+    output.innerHTML = html;
+  } catch (e) { console.error(e); output.innerHTML="<b>Ошибка загрузки статистики Kids</b>"; }
+});
+
+document.getElementById("btnKidsVisitsDetailed").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка Kids подробно…";
+  try {
+    const qKids = query(collection(db,"visits_kids"), orderBy("timestamp","desc"), limit(100));
+    const snap = await getDocs(qKids);
+    const visits = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    output.innerHTML = renderLatestVisits(visits, "Kids — последние посещения");
+  } catch(e){ console.error(e); output.innerHTML="<b>Ошибка загрузки Kids подробно</b>"; }
+});
 </script>
+
 </body>
 </html>
