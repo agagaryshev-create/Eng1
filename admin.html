@@ -94,9 +94,7 @@ async function loadTestsJSON(){
   try {
     const res = await fetch('tests.json');
     if(!res.ok){
-      testsJSON = {};
-      allTests = [...baseTests];
-      return;
+      throw new Error('Не удалось загрузить файл тестов');
     }
     testsJSON = await res.json();
     allTests = [...baseTests];
@@ -110,8 +108,10 @@ async function loadTestsJSON(){
       }
     }
   } catch(e){
+    console.error("Ошибка загрузки тестов:", e);
     testsJSON = {};
     allTests = [...baseTests];
+    alert('Не удалось загрузить тесты. Пожалуйста, попробуйте позже.');
   }
 }
 
@@ -256,12 +256,13 @@ function renderLatestVisits(list) {
            </tr></thead><tbody>`;
 
   list.forEach(v => {
-    const dt = new Date(v.timestamp).toLocaleString("ru-RU");
+    const dt = new Date(v.timestamp);
+    const dtFormatted = `${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU")}`;
     const extra = JSON.stringify(v, null, 2)
                     .replace(/"/g, "")
                     .replace(/\{|\}/g, "");
     html += `<tr>
-              <td>${dt}</td>
+              <td>${dtFormatted}</td>
               <td>${v.uid || '—'}</td>
               <td><pre>${extra}</pre></td>
             </tr>`;
@@ -300,23 +301,33 @@ document.getElementById('btnBase').addEventListener('click', async () => {
 // === посещения по дням ===
 document.getElementById('btnVisits').addEventListener('click', async () => {
   output.innerHTML = 'Загрузка статистики посещений…';
-  const visits = await getAllVisits();
-  if(!visits.length){
-    output.innerHTML = '<b>Нет записей в visits</b>';
-    return;
+  try {
+    const visits = await getAllVisits();
+    if(!visits.length){
+      output.innerHTML = '<b>Нет записей в visits</b>';
+      return;
+    }
+    output.innerHTML = renderVisitsByDay(groupVisitsByDay(visits));
+  } catch (error) {
+    console.error('Ошибка при загрузке посещений:', error);
+    output.innerHTML = '<b>Произошла ошибка при загрузке данных. Попробуйте снова.</b>';
   }
-  output.innerHTML = renderVisitsByDay(groupVisitsByDay(visits));
 });
 
 // === последние посещения ===
 document.getElementById('btnVisitsDetailed').addEventListener('click', async () => {
   output.innerHTML = 'Загрузка последних посещений…';
-  const list = await getLatestVisits(100);
-  if(!list.length){
-    output.innerHTML = '<b>Нет записей в visits</b>';
-    return;
+  try {
+    const list = await getLatestVisits(100);
+    if(!list.length){
+      output.innerHTML = '<b>Нет записей в visits</b>';
+      return;
+    }
+    output.innerHTML = renderLatestVisits(list);
+  } catch (error) {
+    console.error('Ошибка при загрузке последних посещений:', error);
+    output.innerHTML = '<b>Произошла ошибка при загрузке данных. Попробуйте снова.</b>';
   }
-  output.innerHTML = renderLatestVisits(list);
 });
 
 document.getElementById('btnExport').addEventListener('click', exportTableToCSV);
