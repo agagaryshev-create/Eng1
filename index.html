@@ -1,248 +1,86 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>English OGE Tests – Главная</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>English Learning – Главная</title>
 <style>
-body { font-family: Arial, sans-serif; margin: 20px; max-width: 900px; }
-h1 { text-align: center; }
-
-.auth-box { max-width: 400px; margin: 0 auto; }
-input, button { width: 100%; padding: 10px; margin: 5px 0; font-size: 16px; }
-button { cursor: pointer; }
-
-.menu { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
-.menu .card {
-  flex: 1 1 200px;
-  max-width: 250px;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  text-align: center;
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  text-decoration: none; color: black;
-}
-.menu .card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-
-#stats-container { margin-top: 30px; overflow-x: auto; }
-#stats-container table { width: 100%; border-collapse: collapse; }
-#stats-container th, #stats-container td { border: 1px solid #333; padding: 8px; text-align: center; }
-
-.progress-container { background: #eee; border-radius: 5px; overflow: hidden; height: 20px; margin-top: 5px; }
-.progress-bar { height: 100%; background: linear-gradient(90deg, #4CAF50, #81C784); width: 0%; text-align: center; color: white; font-weight: bold; }
-
-#scoreChart { max-width: 800px; margin-top: 30px; display: none; }
-
-@media(max-width:600px){
-  .menu { flex-direction: column; align-items: center; }
-}
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+  }
+  .links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  a {
+    font-size: 18px;
+    color: #0066cc;
+  }
 </style>
 </head>
 <body>
 
-<h1>English OGE Tests</h1>
+<h1>Добро пожаловать на English Learning</h1>
 
-<div style="margin-top: 20px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
-  <button onclick="location.href='kids.html'" style="padding:10px 20px; font-size:16px;"> 🐶 Аглийский для детей</button>
-  <button onclick="location.href='OGE_English_Guide.html'" style="padding:10px 20px; font-size:16px;">📖 Шпаргалка по ОГЭ</button>
-  <button onclick="location.href='oge-tests.html'" style="padding:10px 20px; font-size:16px;">📝 Перейти к тестам</button>
-</div>
-<p style="font-size:14px; color:#555; max-width:500px; margin: 10px auto;">
-  Тесты по английскому для ОГЭ. Сюда входят базовые 5 тестов и новые 70 тестов из JSON.
-</p>
+<p>Выберите раздел:</p>
 
-<!-- Авторизация -->
-<div class="auth-box" id="auth">
-  <h3>Авторизация</h3>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Пароль">
-  <button id="register-btn">Зарегистрироваться</button>
-  <button id="login-btn">Войти</button>
-  <button id="logout-btn" style="display:none;">Выйти</button>
-  <div id="auth-msg"></div>
+<div class="links">
+  <a href="kids.html">Английский для детей</a>
+  <a href="oge_tests.html">Тесты ОГЭ по английскому</a>
+  <a href="words.html">Учить слова</a>
+  <a href="audio.html">Аудио-уроки</a>
 </div>
 
-<!-- Базовые тесты -->
-<h2>Базовые тесты</h2>
-<div class="menu" id="base-tests">
-  <a href="test1.html" class="card" target="_blank">1. Alice & Tom</a>
-  <a href="test2.html" class="card" target="_blank">2. Sports</a>
-  <a href="test3.html" class="card" target="_blank">3. Holidays</a>
-  <a href="test4.html" class="card" target="_blank">4. Environment</a>
-  <a href="test5.html" class="card" target="_blank">5. Daily Life</a>
-</div>
-
-<!-- Новые тесты из JSON -->
-<h2>Новые тесты</h2>
-<div class="menu" id="json-tests"></div>
-
-<!-- Кнопка для показа статистики -->
-<button id="show-stats-btn" style="margin-top:20px;">📊 Показать статистику</button>
-<div id="stats-loader" style="display:none; margin-top:10px;">Загрузка статистики… ⏳</div>
-<div id="stats-container"></div>
-<canvas id="scoreChart"></canvas>
+<!-- ==================================================================== -->
+<!-- === FIREBASE + АНАЛИТИКА ПОСЕЩЕНИЙ ================================ -->
+<!-- ==================================================================== -->
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+  // Firebase SDK
+  import { initializeApp } 
+    from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 
-// ===== Firebase =====
-const firebaseConfig = {
-  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
-  authDomain: "engtestoge.firebaseapp.com",
-  projectId: "engtestoge"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+  import { getFirestore, collection, addDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// Авторизация
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const registerBtn = document.getElementById("register-btn");
-const loginBtn = document.getElementById("login-btn");
-const logoutBtn = document.getElementById("logout-btn");
-const authMsg = document.getElementById("auth-msg");
+  // === ТВОИ НАСТРОЙКИ FIREBASE (замени на реальные) ===
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "000000000000",
+    appId: "1:000000000000:web:xxxxxxxxxxxxxxxx"
+  };
 
-// Статистика
-const statsBtn = document.getElementById("show-stats-btn");
-const statsLoader = document.getElementById("stats-loader");
-const statsDiv = document.getElementById("stats-container");
-const chartCanvas = document.getElementById("scoreChart");
-let scoreChartInstance = null;
+  // Инициализация Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-// JSON тесты
-let testsJSON = {};
-
-async function loadTestsJSON(){
-  try {
-    const res = await fetch('tests.json');
-    testsJSON = await res.json();
-    renderJSONTests();
-  } catch(e){ console.error("Ошибка загрузки tests.json", e); }
-}
-await loadTestsJSON();
-
-// ===== Отображение JSON тестов =====
-function renderJSONTests(){
-  const container = document.getElementById("json-tests");
-  container.innerHTML = '';
-  let counter = 6; // нумерация после базовых 5 тестов
-  for(const level in testsJSON){
-    for(const test of testsJSON[level]){
-      const a = document.createElement('a');
-      a.href = `test.html?id=${test.id}`;
-      a.target = "_blank";
-      a.className = 'card';
-      a.innerText = `${counter}. ${test.title} (Уровень ${test.level})`;
-      container.appendChild(a);
-      counter++;
+  // === ЛОГИРОВАНИЕ ПОСЕЩЕНИЯ ГЛАВНОЙ СТРАНИЦЫ ===
+  async function logVisitMain() {
+    try {
+      await addDoc(collection(db, "visits"), {
+        timestamp: serverTimestamp(),
+        page: "index.html",
+        userAgent: navigator.userAgent
+      });
+      console.log("Visit logged");
+    } catch (e) {
+      console.error("Error logging visit:", e);
     }
   }
-}
 
-// ===== Авторизация =====
-registerBtn.addEventListener("click", async () => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    const uid = userCredential.user.uid;
-    authMsg.innerText = "Регистрация успешна!";
-    await setDoc(doc(db, "results", uid), { created: new Date() });
-  } catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
-});
-loginBtn.addEventListener("click", async () => {
-  try { await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value); authMsg.innerText = "Вход выполнен!"; } 
-  catch (err) { authMsg.innerText = "Ошибка: " + err.message; }
-});
-logoutBtn.addEventListener("click", async () => { try { await signOut(auth); } catch (err) { alert("Ошибка выхода: " + err.message); } });
-
-// ===== Статистика по кнопке =====
-onAuthStateChanged(auth, async (user) => {
-  if(user){
-    emailInput.style.display="none";
-    passwordInput.style.display="none";
-    registerBtn.style.display="none";
-    loginBtn.style.display="none";
-    logoutBtn.style.display="inline";
-    authMsg.innerText="Вы вошли как: "+user.email;
-  } else {
-    emailInput.style.display="inline";
-    passwordInput.style.display="inline";
-    registerBtn.style.display="inline";
-    loginBtn.style.display="inline";
-    logoutBtn.style.display="none";
-    statsDiv.innerHTML = '';
-    chartCanvas.style.display="none";
-  }
-});
-
-statsBtn.addEventListener("click", async () => {
-  const user = auth.currentUser;
-  if(!user) { alert("Сначала войдите!"); return; }
-  statsLoader.style.display = 'block';
-  await showFullStats(user.uid);
-  statsLoader.style.display = 'none';
-});
-
-// ===== Вывод статистики =====
-async function showFullStats(uid){
-  const chartLabels = [], chartData = [];
-  let totalScore=0, totalMax=0;
-  let html="<h2>История результатов</h2><table><tr><th>Тест</th><th>Баллы</th><th>Прогресс</th></tr>";
-
-  // Базовые 5 тестов
-  const baseTests = [
-    {id:'test1', title:'Alice & Tom', maxPoints:3},
-    {id:'test2', title:'Sports', maxPoints:3},
-    {id:'test3', title:'Holidays', maxPoints:5},
-    {id:'test4', title:'Environment', maxPoints:3},
-    {id:'test5', title:'Daily Life', maxPoints:5},
-  ];
-
-  const allTests = [...baseTests];
-  for(const level in testsJSON){
-    allTests.push(...testsJSON[level].map(t=>({id:t.id, title:t.title, maxPoints:t.maxPoints ?? 5})));
-  }
-
-  let loaded=0;
-  for(const test of allTests){
-    const attemptsCol = collection(db,"results",uid,`${test.id}_attempts`);
-    const snap = await getDocs(attemptsCol);
-    const lastScore = snap.empty ? 0 : snap.docs[snap.docs.length-1].data().score ?? 0;
-    const percent = Math.round(lastScore/test.maxPoints*100);
-
-    totalScore += lastScore;
-    totalMax += test.maxPoints;
-
-    html+=`<tr><td>${test.title}</td><td>${lastScore} / ${test.maxPoints}</td>
-      <td><div class="progress-container"><div class="progress-bar" style="width:${percent}%">${percent}%</div></div></td></tr>`;
-
-    chartLabels.push(test.title);
-    chartData.push(lastScore);
-
-    loaded++;
-    // обновляем прогрессбар
-    statsLoader.innerText = `Загрузка статистики… ${Math.round(loaded/allTests.length*100)}% ⏳`;
-  }
-
-  html+=`<tr><td><strong>Итого</strong></td><td>${totalScore} / ${totalMax}</td><td></td></tr></table>`;
-  statsDiv.innerHTML = html;
-
-  // Chart.js
-  if(chartData.length>0){
-    chartCanvas.style.display="block";
-    if(scoreChartInstance) scoreChartInstance.destroy();
-    scoreChartInstance = new Chart(chartCanvas,{
-      type:'line',
-      data:{ labels:chartLabels, datasets:[{label:'Баллы', data:chartData, borderColor:'blue', fill:false, tension:0.2}] },
-      options:{ responsive:true }
-    });
-  } else chartCanvas.style.display="none";
-}
+  // Вызов логирования
+  logVisitMain();
 </script>
 
 </body>
