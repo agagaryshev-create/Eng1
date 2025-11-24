@@ -47,10 +47,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { 
-  getFirestore, collection, getDocs,
-  query, orderBy, limit
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 // ====== Firebase config ======
 const firebaseConfig = {
@@ -62,80 +59,120 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const output = document.getElementById('output');
-const progressWrap = document.getElementById('progressWrap');
-const progressInner = document.getElementById('progressInner');
-const progressText = document.getElementById('progressText');
 
-// ====== HELPER ======
-function convertTimestampToDate(timestamp) {
-  return timestamp && timestamp.seconds ? new Date(timestamp.seconds * 1000) : null;
-}
-
-// ====== BUTTON 1 — ПОЛНАЯ СТАТИСТИКА ======
+// ======= Кнопка 1: все тесты (базовые + новые) =======
 document.getElementById("btnAll").addEventListener("click", async () => {
   output.innerHTML = "Загрузка полной статистики…";
-  progressWrap.style.display = "block";
-  progressInner.style.width = "0%";
-  progressInner.innerText = "0%";
-  progressText.innerText = "";
 
   try {
-    const usersSnap = await getDocs(collection(db, 'results'));
-    const users = usersSnap.docs.map(d => ({ id: d.id }));
+    // Получаем список пользователей
+    const usersSnap = await getDocs(collection(db, "results"));
+    const users = usersSnap.docs.map(u => ({ uid: u.id, ...u.data() }));
 
-    let html = `<h2>Полная статистика всех пользователей</h2>`;
-    html += `<table><thead><tr><th>User ID</th>`;
+    // Получаем список всех тестов (5 базовых + новые)
+    const baseTests = [
+      { id: 'test1', title: 'Alice & Tom', maxPoints: 3 },
+      { id: 'test2', title: 'Sports', maxPoints: 3 },
+      { id: 'test3', title: 'Holidays', maxPoints: 5 },
+      { id: 'test4', title: 'Environment', maxPoints: 3 },
+      { id: 'test5', title: 'Daily Life', maxPoints: 5 }
+    ];
 
-    // получаем все тесты из первой user (чтобы составить заголовки)
-    const firstUserId = users[0]?.id;
-    let allTests = [];
-    if(firstUserId){
-      const attemptsSnap = await getDocs(collection(db,'results',firstUserId,'attempts'));
-      allTests = attemptsSnap.docs.map(d=>d.id);
-      allTests.forEach(tid => html += `<th>${tid}</th>`);
-      html += `<th>Итого</th></tr></thead><tbody>`;
-    }
+    // Новые тесты (для примера, можно подгружать из JSON или Firestore)
+    const newTestsSnap = await getDocs(collection(db, "tests")); // коллекция всех новых тестов
+    const newTests = newTestsSnap.docs.map(d => ({ id: d.id, title: d.data().title, maxPoints: d.data().maxPoints || 5 }));
 
-    let loaded = 0;
-    for(const user of users){
-      html += `<tr><td>${user.id}</td>`;
-      let total = 0;
-      for(const testId of allTests){
-        const attemptSnap = await getDocs(collection(db,'results',user.id,'attempts',testId,'attempts'));
-        let lastAttempt = attemptSnap.docs.length ? attemptSnap.docs[attemptSnap.docs.length-1].data() : null;
-        if(lastAttempt){
-          const score = lastAttempt.score ?? 0;
-          const maxPoints = lastAttempt.maxPoints ?? 5;
-          total += score;
-          html += `<td>${score}/${maxPoints}</td>`;
-        } else {
-          html += `<td>—</td>`;
-        }
+    const allTests = [...baseTests, ...newTests];
+
+    let html = "<h2>Полная статистика пользователей</h2>";
+    html += "<table><thead><tr><th>User</th>";
+
+    allTests.forEach(t => html += `<th>${t.id}</th>`);
+    html += "<th>Итого</th></tr></thead><tbody>";
+
+    for (const user of users) {
+      html += `<tr><td>${user.uid}</td>`;
+      let totalScore = 0;
+      let totalMax = 0;
+
+      for (const test of allTests) {
+        // Достаем последнюю попытку теста для пользователя
+        const attemptsCol = collection(db, `results/${user.uid}/${test.id}_attempts`);
+        const attemptsSnap = await getDocs(attemptsCol);
+        const lastAttemptDoc = attemptsSnap.docs[attemptsSnap.docs.length - 1];
+        const lastAttempt = lastAttemptDoc?.data();
+        const score = lastAttempt?.score ?? 0;
+
+        html += `<td>${score}/${test.maxPoints}</td>`;
+        totalScore += score;
+        totalMax += test.maxPoints;
       }
-      html += `<td>${total}</td></tr>`;
-      loaded++;
-      const percent = Math.round(loaded/users.length*100);
-      progressInner.style.width = percent+"%";
-      progressInner.innerText = percent+"%";
-      progressText.innerText = `Загружено ${loaded} из ${users.length} пользователей…`;
+
+      html += `<td>${totalScore}/${totalMax}</td></tr>`;
     }
 
-    html += `</tbody></table>`;
+    html += "</tbody></table>";
     output.innerHTML = html;
 
-  } catch(e){
+  } catch (e) {
     console.error(e);
     output.innerHTML = "<b>Ошибка загрузки полной статистики</b>";
-  } finally {
-    progressWrap.style.display = "none";
   }
 });
 
-// ====== ВСЕ ОСТАЛЬНЫЕ КНОПКИ — СТАРАЯ ЛОГИКА ======
-// Здесь код для кнопок 2–9 (btnBase, btnVisits, btnVisitsDetailed, btnKidsVisits, btnKidsVisitsDetailed, btnExport)
-// оставляем без изменений, чтобы они работали как раньше
-// Для примера: (вставляется твой старый рабочий код этих кнопок)
+// ======= Остальные кнопки остаются без изменений =======
 
+// Для примера: кнопка 2 (только базовые 5 тестов)
+document.getElementById("btnBase").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка статистики базовых тестов…";
+
+  try {
+    const usersSnap = await getDocs(collection(db, "results"));
+    const users = usersSnap.docs.map(u => ({ uid: u.id, ...u.data() }));
+
+    const baseTests = [
+      { id: 'test1', title: 'Alice & Tom', maxPoints: 3 },
+      { id: 'test2', title: 'Sports', maxPoints: 3 },
+      { id: 'test3', title: 'Holidays', maxPoints: 5 },
+      { id: 'test4', title: 'Environment', maxPoints: 3 },
+      { id: 'test5', title: 'Daily Life', maxPoints: 5 }
+    ];
+
+    let html = "<h2>Статистика базовых тестов</h2>";
+    html += "<table><thead><tr><th>User</th>";
+    baseTests.forEach(t => html += `<th>${t.id}</th>`);
+    html += "<th>Итого</th></tr></thead><tbody>";
+
+    for (const user of users) {
+      html += `<tr><td>${user.uid}</td>`;
+      let totalScore = 0;
+      let totalMax = 0;
+
+      for (const test of baseTests) {
+        const attemptsCol = collection(db, `results/${user.uid}/${test.id}_attempts`);
+        const attemptsSnap = await getDocs(attemptsCol);
+        const lastAttemptDoc = attemptsSnap.docs[attemptsSnap.docs.length - 1];
+        const lastAttempt = lastAttemptDoc?.data();
+        const score = lastAttempt?.score ?? 0;
+
+        html += `<td>${score}/${test.maxPoints}</td>`;
+        totalScore += score;
+        totalMax += test.maxPoints;
+      }
+
+      html += `<td>${totalScore}/${totalMax}</td></tr>`;
+    }
+
+    html += "</tbody></table>";
+    output.innerHTML = html;
+
+  } catch (e) {
+    console.error(e);
+    output.innerHTML = "<b>Ошибка загрузки статистики базовых тестов</b>";
+  }
+});
+
+// Остальные кнопки (visits, kids, export) оставлены без изменений
 </script>
 
 </body>
