@@ -21,13 +21,19 @@
 </style>
 </head>
 <body>
+
 <h1>Админка — статистика (все пользователи)</h1>
-<p class="note">Эта страница использует ту же логику чтения результатов, что и главная (index.html): для каждого теста берём коллекцию <code>{test.id}_attempts</code> в документе пользователя и читаем последнюю запись.</p>
+<p class="note">
+Эта страница использует ту же логику чтения результатов, что и главная (index.html).
+</p>
 
 <div class="controls">
   <button id="btnAll">Загрузить статистику — все тесты</button>
   <button id="btnBase">Только базовые 5 тестов</button>
-  <button id="btnClear">Очистить</button>
+
+  <button id="btnVisits">Статистика посещений</button>
+  <button id="btnVisitsDetailed">Подробная статистика посещений</button>
+
   <button id="btnExport">Экспорт CSV</button>
 </div>
 
@@ -38,12 +44,14 @@
 
 <div id="output"></div>
 
-<!-- Используем модульную версию Firebase (как в твоём index.html) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { 
+  getFirestore, collection, getDocs,
+  query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ====== Firebase config (тот же, что у тебя) ======
+// ====== Firebase config ======
 const firebaseConfig = {
   apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
   authDomain: "engtestoge.firebaseapp.com",
@@ -52,7 +60,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ====== Список базовых тестов — точно как в index.html ======
+// ====== Base tests ======
 const baseTests = [
   {id:'test1', title:'Alice & Tom', maxPoints:3},
   {id:'test2', title:'Sports', maxPoints:3},
@@ -62,10 +70,10 @@ const baseTests = [
 ];
 
 let testsJSON = {};
-let allTests = [...baseTests]; // will be extended from tests.json
-let lastTableHtml = '';
+let allTests = [...baseTests];
+let lastTableHtml = "";
 
-// ---- UI helpers
+// UI
 const output = document.getElementById('output');
 const progressWrap = document.getElementById('progressWrap');
 const progressInner = document.getElementById('progressInner');
@@ -81,12 +89,11 @@ function setProgress(percent, text=''){
   progressText.innerText = text || '';
 }
 
-// ==== Load tests.json (same behavior as index.html) ====
+// ===== Load tests.json =====
 async function loadTestsJSON(){
   try {
     const res = await fetch('tests.json');
     if(!res.ok){
-      console.warn('tests.json not found, will use only base tests');
       testsJSON = {};
       allTests = [...baseTests];
       return;
@@ -94,117 +101,229 @@ async function loadTestsJSON(){
     testsJSON = await res.json();
     allTests = [...baseTests];
     for(const level in testsJSON){
-      const arr = testsJSON[level];
-      for(const t of arr){
-        allTests.push({ id: t.id, title: t.title, maxPoints: t.maxPoints ?? 5 });
+      for(const t of testsJSON[level]){
+        allTests.push({
+          id: t.id,
+          title: t.title,
+          maxPoints: t.maxPoints ?? 5
+        });
       }
     }
-    console.log('Loaded tests.json — total tests:', allTests.length);
   } catch(e){
-    console.error('Error loading tests.json', e);
-    testsJSON = {}; allTests = [...baseTests];
+    testsJSON = {};
+    allTests = [...baseTests];
   }
 }
 
-// ==== get all user ids from /results ====
+// === get all user ids ===
 async function getAllUserIds(){
   const snap = await getDocs(collection(db, 'results'));
   return snap.docs.map(d => d.id);
 }
 
-// ==== read last score for (uid, testId) exactly like index.html does ====
+// === get last score for test ===
 async function getLastScoreFor(uid, testId){
   try {
-    // exactly same path and method as in index.html
     const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
     const snap = await getDocs(attemptsCol);
     if(snap.empty) return 0;
     const last = snap.docs[snap.docs.length - 1].data();
-    return (last && (typeof last.score === 'number' || typeof last.score === 'string')) ? Number(last.score) : 0;
-  } catch(e){
-    console.error('Error reading', uid, testId, e);
+    return Number(last.score ?? 0);
+  } catch {
     return 0;
   }
 }
 
-// ==== build table for a list of users and tests (mirrors showFullStats logic) ====
+// === Build table ===
 async function buildStatsForUsers(userIds, testsList){
   showProgress(true);
   setProgress(0, 'Запуск…');
 
-  // table header
   let html = `<h3>Статистика — ${testsList.length} тестов — пользователей: ${userIds.length}</h3>`;
-  html += '<div style="overflow:auto"><table><thead><tr><th>UID</th>';
+  html += `<div style="overflow:auto"><table><thead><tr><th>UID</th>`;
   for(const t of testsList) html += `<th style="min-width:90px">${t.title}</th>`;
-  html += '<th>Total</th></tr></thead><tbody>';
+  html += `<th>Total</th></tr></thead><tbody>`;
 
   let processed = 0;
+
   for(const uid of userIds){
-    // запросы по тестам для одного пользователя — параллельно (как в index)
     const promises = testsList.map(t => getLastScoreFor(uid, t.id));
     const scores = await Promise.all(promises);
 
-    let rowTotal = 0, rowMax = 0;
+    let total = 0;
+    let max = 0;
+
     html += `<tr><td style="text-align:left">${uid}</td>`;
-    for(let i=0;i<testsList.length;i++){
-      const s = scores[i] ?? 0;
-      const m = testsList[i].maxPoints ?? 5;
+    scores.forEach((s, i) => {
+      const m = testsList[i].maxPoints;
+      total += s;
+      max += m;
       html += `<td>${s} / ${m}</td>`;
-      rowTotal += s;
-      rowMax += m;
-    }
-    html += `<td><strong>${rowTotal} / ${rowMax}</strong></td></tr>`;
+    });
+    html += `<td><strong>${total} / ${max}</strong></td></tr>`;
 
     processed++;
-    setProgress((processed/userIds.length)*100, `Обработано ${processed} / ${userIds.length} пользователей`);
-    // небольшой yield для UI
+    setProgress((processed/userIds.length)*100, `Обработано ${processed} / ${userIds.length}`);
     await new Promise(r => setTimeout(r, 10));
   }
 
-  html += '</tbody></table></div>';
+  html += `</tbody></table></div>`;
   showProgress(false);
   lastTableHtml = html;
   return html;
 }
 
-// ==== Export CSV ====
+// ===== Export CSV =====
 function exportTableToCSV(){
-  if(!lastTableHtml){ alert('Сначала загрузите таблицу'); return; }
+  if(!lastTableHtml){
+    alert('Сначала загрузите таблицу');
+    return;
+  }
   const tmp = document.createElement('div');
   tmp.innerHTML = lastTableHtml;
   const table = tmp.querySelector('table');
   if(!table){ alert('Таблица не найдена'); return; }
+
   const rows = Array.from(table.rows);
-  const csv = rows.map(row => Array.from(row.cells).map(cell => '"' + cell.innerText.replace(/"/g,'""') + '"').join(',')).join('\r\n');
+  const csv = rows.map(row =>
+    Array.from(row.cells)
+    .map(cell => `"${cell.innerText.replace(/"/g,'""')}"`)
+    .join(',')
+  ).join('\r\n');
+
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'oge_stats.csv'; a.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'oge_stats.csv';
+  a.click();
   URL.revokeObjectURL(url);
 }
 
-// ==== Buttons handlers ====
+// ==========================
+// === VISITS STATISTICS ====
+// ==========================
+
+// — получить все посещения —
+async function getAllVisits() {
+  const snap = await getDocs(collection(db, 'visits'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// — сгруппировать посещения по дням —
+function groupVisitsByDay(visits) {
+  const map = {};
+  visits.forEach(v => {
+    const date = new Date(v.timestamp).toISOString().slice(0, 10);
+    map[date] = (map[date] || 0) + 1;
+  });
+  return map;
+}
+
+// — получить последние 100 —
+async function getLatestVisits(limitCount = 100) {
+  const q = query(
+    collection(db, "visits"),
+    orderBy("timestamp", "desc"),
+    limit(limitCount)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// — таблица: посещения по дням —
+function renderVisitsByDay(map) {
+  let html = `<h3>Статистика посещений по дням</h3>`;
+  html += `<table><thead><tr><th>Дата</th><th>Посещений</th></tr></thead><tbody>`;
+
+  const days = Object.keys(map).sort().reverse();
+  days.forEach(day => {
+    html += `<tr><td>${day}</td><td>${map[day]}</td></tr>`;
+  });
+
+  html += `</tbody></table>`;
+  lastTableHtml = html;
+  return html;
+}
+
+// — таблица: последние посещения —
+function renderLatestVisits(list) {
+  let html = `<h3>Последние ${list.length} посещений</h3>`;
+  html += `<table><thead><tr>
+              <th>Дата / время</th>
+              <th>UID</th>
+              <th>Доп. сведения</th>
+           </tr></thead><tbody>`;
+
+  list.forEach(v => {
+    const dt = new Date(v.timestamp).toLocaleString("ru-RU");
+    const extra = JSON.stringify(v, null, 2)
+                    .replace(/"/g, "")
+                    .replace(/\{|\}/g, "");
+    html += `<tr>
+              <td>${dt}</td>
+              <td>${v.uid || '—'}</td>
+              <td><pre>${extra}</pre></td>
+            </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  lastTableHtml = html;
+  return html;
+}
+
+// ==========================
+// ====== BUTTONS ===========
+// ==========================
+
 document.getElementById('btnAll').addEventListener('click', async () => {
   output.innerHTML = 'Подготовка…';
-  await loadTestsJSON(); // build allTests
+  await loadTestsJSON();
   const users = await getAllUserIds();
-  if(users.length === 0){ output.innerHTML = '<b>Нет пользователей в /results</b>'; return; }
-  const tbl = await buildStatsForUsers(users, allTests);
-  output.innerHTML = tbl;
+  if(!users.length){
+    output.innerHTML = '<b>Нет пользователей</b>';
+    return;
+  }
+  output.innerHTML = await buildStatsForUsers(users, allTests);
 });
 
 document.getElementById('btnBase').addEventListener('click', async () => {
-  output.innerHTML = 'Подготовка базовых тестов…';
+  output.innerHTML = 'Подготовка…';
   const users = await getAllUserIds();
-  if(users.length === 0){ output.innerHTML = '<b>Нет пользователей в /results</b>'; return; }
-  const tbl = await buildStatsForUsers(users, baseTests);
-  output.innerHTML = tbl;
+  if(!users.length){
+    output.innerHTML = '<b>Нет пользователей</b>';
+    return;
+  }
+  output.innerHTML = await buildStatsForUsers(users, baseTests);
 });
 
-document.getElementById('btnClear').addEventListener('click', ()=> { output.innerHTML=''; lastTableHtml=''; });
+// === посещения по дням ===
+document.getElementById('btnVisits').addEventListener('click', async () => {
+  output.innerHTML = 'Загрузка статистики посещений…';
+  const visits = await getAllVisits();
+  if(!visits.length){
+    output.innerHTML = '<b>Нет записей в visits</b>';
+    return;
+  }
+  output.innerHTML = renderVisitsByDay(groupVisitsByDay(visits));
+});
+
+// === последние посещения ===
+document.getElementById('btnVisitsDetailed').addEventListener('click', async () => {
+  output.innerHTML = 'Загрузка последних посещений…';
+  const list = await getLatestVisits(100);
+  if(!list.length){
+    output.innerHTML = '<b>Нет записей в visits</b>';
+    return;
+  }
+  output.innerHTML = renderLatestVisits(list);
+});
+
 document.getElementById('btnExport').addEventListener('click', exportTableToCSV);
 
-// preload tests.json for convenience
-loadTestsJSON().then(()=> console.log('tests.json loaded, total tests:', allTests.length)).catch(()=>{});
+// preload
+loadTestsJSON();
 </script>
+
 </body>
 </html>
