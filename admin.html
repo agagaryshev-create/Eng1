@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<title>Admin — OGE stats (all users, same logic as index)</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-  body{font-family:Arial,Helvetica,sans-serif;padding:18px;max-width:1200px;margin:auto}
-  h1{margin-bottom:6px}
-  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-  button{padding:8px 12px;font-size:14px;cursor:pointer}
-  #progressWrap{margin:10px 0;display:none}
-  #progressBar{height:20px;background:#e6e6e6;border-radius:6px;overflow:hidden}
-  #progressInner{height:100%;width:0;background:linear-gradient(90deg,#4caf50,#81c784);text-align:center;color:white;line-height:20px;font-weight:600}
-  #progressText{font-size:13px;color:#444;margin-top:6px}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{border:1px solid #ccc;padding:6px;text-align:center}
-  th{background:#f5f5f5}
-  pre{white-space:pre-wrap;word-wrap:break-word;margin:0}
-  .note{color:#555;font-size:13px}
-</style>
+  <meta charset="utf-8" />
+  <title>Admin — OGE stats (all users, same logic as index)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;padding:18px;max-width:1200px;margin:auto}
+    h1{margin-bottom:6px}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+    button{padding:8px 12px;font-size:14px;cursor:pointer}
+    #progressWrap{margin:10px 0;display:none}
+    #progressBar{height:20px;background:#e6e6e6;border-radius:6px;overflow:hidden}
+    #progressInner{height:100%;width:0;background:linear-gradient(90deg,#4caf50,#81c784);text-align:center;color:white;line-height:20px;font-weight:600}
+    #progressText{font-size:13px;color:#444;margin-top:6px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border:1px solid #ccc;padding:6px;text-align:center}
+    th{background:#f5f5f5}
+    pre{white-space:pre-wrap;word-wrap:break-word;margin:0}
+    .note{color:#555;font-size:13px}
+  </style>
 </head>
 <body>
 
@@ -30,10 +30,8 @@
 <div class="controls">
   <button id="btnAll">Загрузить статистику — все тесты</button>
   <button id="btnBase">Только базовые 5 тестов</button>
-
   <button id="btnVisits">Статистика посещений</button>
   <button id="btnVisitsDetailed">Подробная статистика посещений</button>
-
   <button id="btnExport">Экспорт CSV</button>
 </div>
 
@@ -134,87 +132,26 @@ async function getLastScoreFor(uid, testId){
   }
 }
 
-// === Build table ===
-async function buildStatsForUsers(userIds, testsList){
-  showProgress(true);
-  setProgress(0, 'Запуск…');
-
-  let html = `<h3>Статистика — ${testsList.length} тестов — пользователей: ${userIds.length}</h3>`;
-  html += `<div style="overflow:auto"><table><thead><tr><th>UID</th>`;
-  for(const t of testsList) html += `<th style="min-width:90px">${t.title}</th>`;
-  html += `<th>Total</th></tr></thead><tbody>`;
-
-  let processed = 0;
-
-  for(const uid of userIds){
-    const promises = testsList.map(t => getLastScoreFor(uid, t.id));
-    const scores = await Promise.all(promises);
-
-    let total = 0;
-    let max = 0;
-
-    html += `<tr><td style="text-align:left">${uid}</td>`;
-    scores.forEach((s, i) => {
-      const m = testsList[i].maxPoints;
-      total += s;
-      max += m;
-      html += `<td>${s} / ${m}</td>`;
-    });
-    html += `<td><strong>${total} / ${max}</strong></td></tr>`;
-
-    processed++;
-    setProgress((processed/userIds.length)*100, `Обработано ${processed} / ${userIds.length}`);
-    await new Promise(r => setTimeout(r, 10));
-  }
-
-  html += `</tbody></table></div>`;
-  showProgress(false);
-  lastTableHtml = html;
-  return html;
-}
-
-// ===== Export CSV =====
-function exportTableToCSV(){
-  if(!lastTableHtml){
-    alert('Сначала загрузите таблицу');
-    return;
-  }
-  const tmp = document.createElement('div');
-  tmp.innerHTML = lastTableHtml;
-  const table = tmp.querySelector('table');
-  if(!table){ alert('Таблица не найдена'); return; }
-
-  const rows = Array.from(table.rows);
-  const csv = rows.map(row =>
-    Array.from(row.cells)
-    .map(cell => `"${cell.innerText.replace(/"/g,'""')}"`)
-    .join(',')
-  ).join('\r\n');
-
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'oge_stats.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 // ==========================
 // === VISITS STATISTICS ====
 // ==========================
-
-// — получить все посещения —
 async function getAllVisits() {
   const snap = await getDocs(collection(db, 'visits'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// Преобразование метки времени Firebase в объект Date
+function convertTimestampToDate(timestamp) {
+  const dt = new Date(timestamp.seconds * 1000);
+  return dt;
 }
 
 // — сгруппировать посещения по дням —
 function groupVisitsByDay(visits) {
   const map = {};
   visits.forEach(v => {
-    const date = new Date(v.timestamp).toISOString().slice(0, 10);
+    const dt = convertTimestampToDate(v.timestamp);
+    const date = dt.toISOString().slice(0, 10);
     map[date] = (map[date] || 0) + 1;
   });
   return map;
@@ -231,21 +168,6 @@ async function getLatestVisits(limitCount = 100) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// — таблица: посещения по дням —
-function renderVisitsByDay(map) {
-  let html = `<h3>Статистика посещений по дням</h3>`;
-  html += `<table><thead><tr><th>Дата</th><th>Посещений</th></tr></thead><tbody>`;
-
-  const days = Object.keys(map).sort().reverse();
-  days.forEach(day => {
-    html += `<tr><td>${day}</td><td>${map[day]}</td></tr>`;
-  });
-
-  html += `</tbody></table>`;
-  lastTableHtml = html;
-  return html;
-}
-
 // — таблица: последние посещения —
 function renderLatestVisits(list) {
   let html = `<h3>Последние ${list.length} посещений</h3>`;
@@ -256,7 +178,7 @@ function renderLatestVisits(list) {
            </tr></thead><tbody>`;
 
   list.forEach(v => {
-    const dt = new Date(v.timestamp);
+    const dt = convertTimestampToDate(v.timestamp);
     const dtFormatted = `${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU")}`;
     const extra = JSON.stringify(v, null, 2)
                     .replace(/"/g, "")
@@ -276,45 +198,6 @@ function renderLatestVisits(list) {
 // ==========================
 // ====== BUTTONS ===========
 // ==========================
-
-document.getElementById('btnAll').addEventListener('click', async () => {
-  output.innerHTML = 'Подготовка…';
-  await loadTestsJSON();
-  const users = await getAllUserIds();
-  if(!users.length){
-    output.innerHTML = '<b>Нет пользователей</b>';
-    return;
-  }
-  output.innerHTML = await buildStatsForUsers(users, allTests);
-});
-
-document.getElementById('btnBase').addEventListener('click', async () => {
-  output.innerHTML = 'Подготовка…';
-  const users = await getAllUserIds();
-  if(!users.length){
-    output.innerHTML = '<b>Нет пользователей</b>';
-    return;
-  }
-  output.innerHTML = await buildStatsForUsers(users, baseTests);
-});
-
-// === посещения по дням ===
-document.getElementById('btnVisits').addEventListener('click', async () => {
-  output.innerHTML = 'Загрузка статистики посещений…';
-  try {
-    const visits = await getAllVisits();
-    if(!visits.length){
-      output.innerHTML = '<b>Нет записей в visits</b>';
-      return;
-    }
-    output.innerHTML = renderVisitsByDay(groupVisitsByDay(visits));
-  } catch (error) {
-    console.error('Ошибка при загрузке посещений:', error);
-    output.innerHTML = '<b>Произошла ошибка при загрузке данных. Попробуйте снова.</b>';
-  }
-});
-
-// === последние посещения ===
 document.getElementById('btnVisitsDetailed').addEventListener('click', async () => {
   output.innerHTML = 'Загрузка последних посещений…';
   try {
@@ -329,11 +212,6 @@ document.getElementById('btnVisitsDetailed').addEventListener('click', async () 
     output.innerHTML = '<b>Произошла ошибка при загрузке данных. Попробуйте снова.</b>';
   }
 });
-
-document.getElementById('btnExport').addEventListener('click', exportTableToCSV);
-
-// preload
-loadTestsJSON();
 </script>
 
 </body>
