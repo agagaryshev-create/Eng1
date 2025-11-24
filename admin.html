@@ -48,7 +48,8 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { 
-  getFirestore, collection, getDocs, query, orderBy, limit, doc
+  getFirestore, collection, getDocs,
+  query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 // ====== Firebase config ======
@@ -65,104 +66,76 @@ const progressWrap = document.getElementById('progressWrap');
 const progressInner = document.getElementById('progressInner');
 const progressText = document.getElementById('progressText');
 
-// === Load tests JSON for dynamic tests ===
-let testsJSON = {};
-async function loadTestsJSON(){
-  try {
-    const res = await fetch('tests.json');
-    testsJSON = await res.json();
-  } catch(e){ console.error("Ошибка загрузки tests.json", e); }
-}
-await loadTestsJSON();
-
-// === Helper to convert timestamp ===
+// ====== HELPER ======
 function convertTimestampToDate(timestamp) {
-  if (!timestamp || !timestamp.seconds) return null;
-  return new Date(timestamp.seconds * 1000);
+  return timestamp && timestamp.seconds ? new Date(timestamp.seconds * 1000) : null;
 }
 
-// ======== BUTTON 1 — ВСЕ ТЕСТЫ ========
+// ====== BUTTON 1 — ПОЛНАЯ СТАТИСТИКА ======
 document.getElementById("btnAll").addEventListener("click", async () => {
   output.innerHTML = "Загрузка полной статистики…";
   progressWrap.style.display = "block";
   progressInner.style.width = "0%";
   progressInner.innerText = "0%";
+  progressText.innerText = "";
 
   try {
-    // Базовые тесты
-    const baseTests = [
-      {id:'test1', title:'Alice & Tom', maxPoints:3},
-      {id:'test2', title:'Sports', maxPoints:3},
-      {id:'test3', title:'Holidays', maxPoints:5},
-      {id:'test4', title:'Environment', maxPoints:3},
-      {id:'test5', title:'Daily Life', maxPoints:5},
-    ];
+    const usersSnap = await getDocs(collection(db, 'results'));
+    const users = usersSnap.docs.map(d => ({ id: d.id }));
 
-    // Новые JSON тесты
-    const jsonTests = [];
-    for(const level in testsJSON){
-      testsJSON[level].forEach(t=>{
-        jsonTests.push({
-          id: t.id,
-          title: t.title,
-          maxPoints: t.maxPoints || 5
-        });
-      });
+    let html = `<h2>Полная статистика всех пользователей</h2>`;
+    html += `<table><thead><tr><th>User ID</th>`;
+
+    // получаем все тесты из первой user (чтобы составить заголовки)
+    const firstUserId = users[0]?.id;
+    let allTests = [];
+    if(firstUserId){
+      const attemptsSnap = await getDocs(collection(db,'results',firstUserId,'attempts'));
+      allTests = attemptsSnap.docs.map(d=>d.id);
+      allTests.forEach(tid => html += `<th>${tid}</th>`);
+      html += `<th>Итого</th></tr></thead><tbody>`;
     }
 
-    const allTests = [...baseTests, ...jsonTests];
-
-    // Получаем всех пользователей
-    const usersSnap = await getDocs(collection(db, "results"));
-    let html = `<h2>Полная статистика всех тестов</h2>`;
-    html += `<table><thead><tr><th>User</th>`;
-    allTests.forEach(t => html += `<th>${t.id}</th>`);
-    html += `<th>Сумма</th></tr></thead><tbody>`;
-
-    let userCount = 0;
-    for(const userDoc of usersSnap.docs){
-      const uid = userDoc.id;
-      const attemptsCol = collection(db, "results", uid);
-      let rowHtml = `<tr><td>${uid}</td>`;
-      let totalScore = 0, totalMax = 0;
-
-      for(const test of allTests){
-        const testCol = collection(db, "results", uid, `${test.id}_attempts`);
-        const snap = await getDocs(testCol);
-        let lastScore = 0;
-        if(!snap.empty){
-          const lastDoc = snap.docs[snap.docs.length -1];
-          lastScore = lastDoc.data().score || 0;
+    let loaded = 0;
+    for(const user of users){
+      html += `<tr><td>${user.id}</td>`;
+      let total = 0;
+      for(const testId of allTests){
+        const attemptSnap = await getDocs(collection(db,'results',user.id,'attempts',testId,'attempts'));
+        let lastAttempt = attemptSnap.docs.length ? attemptSnap.docs[attemptSnap.docs.length-1].data() : null;
+        if(lastAttempt){
+          const score = lastAttempt.score ?? 0;
+          const maxPoints = lastAttempt.maxPoints ?? 5;
+          total += score;
+          html += `<td>${score}/${maxPoints}</td>`;
+        } else {
+          html += `<td>—</td>`;
         }
-        rowHtml += `<td>${lastScore}/${test.maxPoints}</td>`;
-        totalScore += lastScore;
-        totalMax += test.maxPoints;
       }
-
-      rowHtml += `<td><b>${totalScore}/${totalMax}</b></td>`;
-      rowHtml += `</tr>`;
-      html += rowHtml;
-
-      userCount++;
-      const progressPercent = Math.round(userCount / usersSnap.size * 100);
-      progressInner.style.width = progressPercent + "%";
-      progressInner.innerText = progressPercent + "%";
+      html += `<td>${total}</td></tr>`;
+      loaded++;
+      const percent = Math.round(loaded/users.length*100);
+      progressInner.style.width = percent+"%";
+      progressInner.innerText = percent+"%";
+      progressText.innerText = `Загружено ${loaded} из ${users.length} пользователей…`;
     }
 
     html += `</tbody></table>`;
     output.innerHTML = html;
-    progressWrap.style.display = "none";
 
-  } catch (e){
+  } catch(e){
     console.error(e);
     output.innerHTML = "<b>Ошибка загрузки полной статистики</b>";
+  } finally {
     progressWrap.style.display = "none";
   }
 });
 
-// ===== Остальные кнопки оставлены без изменений =====
+// ====== ВСЕ ОСТАЛЬНЫЕ КНОПКИ — СТАРАЯ ЛОГИКА ======
+// Здесь код для кнопок 2–9 (btnBase, btnVisits, btnVisitsDetailed, btnKidsVisits, btnKidsVisitsDetailed, btnExport)
+// оставляем без изменений, чтобы они работали как раньше
+// Для примера: (вставляется твой старый рабочий код этих кнопок)
 
-// ===== Kids buttons и другие оставляем как есть =====
 </script>
 
 </body>
