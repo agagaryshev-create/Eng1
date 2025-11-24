@@ -62,9 +62,23 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const output = document.getElementById('output');
+const progressWrap = document.getElementById('progressWrap');
+const progressInner = document.getElementById('progressInner');
+const progressText = document.getElementById('progressText');
 
-// === Convert timestamp helper ===
-function convertTimestampToDate(timestamp) {
+function showProgress(show){
+  progressWrap.style.display = show ? 'block' : 'none';
+}
+function setProgress(percent, text=''){
+  const p = Math.round(percent);
+  progressInner.style.width = p + '%';
+  progressInner.innerText = p + '%';
+  progressText.innerText = text || '';
+}
+
+// === Convert timestamp helper with check ===
+function convertTimestampToDateSafe(timestamp) {
+  if(!timestamp || timestamp.seconds === undefined) return null;
   return new Date(timestamp.seconds * 1000);
 }
 
@@ -72,7 +86,8 @@ function convertTimestampToDate(timestamp) {
 function groupVisitsByDay(visits) {
   const map = {};
   visits.forEach(v => {
-    const dt = convertTimestampToDate(v.timestamp);
+    const dt = convertTimestampToDateSafe(v.timestamp);
+    if(!dt) return; // пропускаем записи без timestamp
     const date = dt.toISOString().slice(0, 10);
     map[date] = (map[date] || 0) + 1;
   });
@@ -88,8 +103,8 @@ function renderLatestVisits(list, title="Последние посещения")
            </tr></thead><tbody>`;
 
   list.forEach(v => {
-    const dt = convertTimestampToDate(v.timestamp);
-    const dtFormatted = `${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU")}`;
+    const dt = convertTimestampToDateSafe(v.timestamp);
+    const dtFormatted = dt ? `${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU")}` : '—';
     html += `<tr>
               <td>${dtFormatted}</td>
               <td><pre>${v.userAgent || "—"}</pre></td>
@@ -100,19 +115,15 @@ function renderLatestVisits(list, title="Последние посещения")
   return html;
 }
 
-//
 // ===============================
 // ======== KIDS FUNCTIONS =======
 // ===============================
-//
+// кнопки Kids оставляем без изменений
 
-// === Kids — all visits ===
 async function getAllKidsVisits() {
   const snap = await getDocs(collection(db, 'visits_kids'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
-
-// === Kids — last 100 ===
 async function getLatestKidsVisits(limitCount = 100) {
   const qKids = query(
     collection(db, "visits_kids"),
@@ -122,186 +133,138 @@ async function getLatestKidsVisits(limitCount = 100) {
   const snap = await getDocs(qKids);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
-
-// === Kids visits by day ===
 document.getElementById("btnKidsVisits").addEventListener("click", async () => {
   output.innerHTML = "Загрузка статистики Kids…";
-
   try {
     const visits = await getAllKidsVisits();
-    if (!visits.length) {
-      output.innerHTML = "<b>В visits_kids нет записей</b>";
-      return;
-    }
-
+    if (!visits.length) { output.innerHTML = "<b>В visits_kids нет записей</b>"; return; }
     const grouped = groupVisitsByDay(visits);
-
-    let html = `<h2>Kids — посещения по дням</h2>`;
-    html += `<table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
-
-    for (const day in grouped) {
-      html += `<tr><td>${day}</td><td>${grouped[day]}</td></tr>`;
-    }
-
+    let html = `<h2>Kids — посещения по дням</h2><table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
+    for (const day in grouped) html += `<tr><td>${day}</td><td>${grouped[day]}</td></tr>`;
     html += `</tbody></table>`;
     output.innerHTML = html;
-
-  } catch (e) {
-    console.error(e);
-    output.innerHTML = "<b>Ошибка загрузки статистики Kids</b>";
-  }
+  } catch (e) { console.error(e); output.innerHTML = "<b>Ошибка загрузки статистики Kids</b>"; }
 });
-
-// === Kids detailed ===
 document.getElementById("btnKidsVisitsDetailed").addEventListener("click", async () => {
   output.innerHTML = "Загрузка Kids подробно…";
-
   try {
     const list = await getLatestKidsVisits(100);
-    if (!list.length) {
-      output.innerHTML = "<b>Нет записей visits_kids</b>";
-      return;
+    if (!list.length) { output.innerHTML = "<b>Нет записей visits_kids</b>"; return; }
+    output.innerHTML = renderLatestVisits(list, "Kids — последние посещения");
+  } catch (e) { console.error(e); output.innerHTML = "<b>Ошибка загрузки Kids подробно</b>"; }
+});
+
+// ===============================
+// ======== ALL TESTS BUTTONS =======
+// ===============================
+
+// Загрузка всех тестов
+document.getElementById("btnAll").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка статистики всех тестов…";
+  showProgress(true);
+
+  try {
+    const usersSnap = await getDocs(collection(db, 'results'));
+    const userIds = usersSnap.docs.map(d => d.id);
+    let html = `<h2>Статистика по всем тестам</h2>`;
+    
+    let count = 0;
+    for(const uid of userIds){
+      const userDoc = await getDocs(collection(db, 'results', uid, 'test_attempts'));
+      const userData = userDoc.docs.map(d => {
+        const data = d.data();
+        if(data.timestamp) data.timestamp = convertTimestampToDateSafe(data.timestamp);
+        return data;
+      });
+      html += `<h4>User: ${uid}</h4><pre>${JSON.stringify(userData, null, 2)}</pre>`;
+      count++;
+      setProgress(count/userIds.length*100, `Обработано ${count} из ${userIds.length} пользователей`);
     }
 
-    output.innerHTML = renderLatestVisits(list, "Kids — последние посещения");
-
-  } catch (e) {
+    output.innerHTML = html;
+  } catch(e){
     console.error(e);
-    output.innerHTML = "<b>Ошибка загрузки Kids подробно</b>";
+    output.innerHTML = "<b>Ошибка загрузки статистики всех тестов</b>";
+  } finally {
+    showProgress(false);
   }
 });
 
+// Загрузка только базовых 5 тестов
+document.getElementById("btnBase").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка статистики базовых тестов…";
+  showProgress(true);
 
-//
+  const baseTestIds = ['test1','test2','test3','test4','test5'];
+
+  try {
+    const usersSnap = await getDocs(collection(db, 'results'));
+    const userIds = usersSnap.docs.map(d => d.id);
+    let html = `<h2>Статистика по базовым 5 тестам</h2>`;
+
+    let count = 0;
+    for(const uid of userIds){
+      const attemptsData = [];
+      for(const testId of baseTestIds){
+        const snap = await getDocs(collection(db, 'results', uid, `${testId}_attempts`));
+        const lastAttempt = snap.empty ? null : snap.docs[snap.docs.length-1].data();
+        if(lastAttempt && lastAttempt.timestamp) lastAttempt.timestamp = convertTimestampToDateSafe(lastAttempt.timestamp);
+        attemptsData.push(lastAttempt);
+      }
+      html += `<h4>User: ${uid}</h4><pre>${JSON.stringify(attemptsData, null, 2)}</pre>`;
+      count++;
+      setProgress(count/userIds.length*100, `Обработано ${count} из ${userIds.length} пользователей`);
+    }
+
+    output.innerHTML = html;
+  } catch(e){
+    console.error(e);
+    output.innerHTML = "<b>Ошибка загрузки статистики базовых тестов</b>";
+  } finally {
+    showProgress(false);
+  }
+});
+
 // ===============================
-// === ORIGINAL TEST STATISTICS ==
+// ======== VISITS BUTTONS =======
 // ===============================
-//
 
-// === ALL tests ===
-async function loadAllTests() {
-  output.innerHTML = "Загружаю все тесты…";
-
-  const snap = await getDocs(collection(db, "results"));
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  if (!list.length) {
-    output.innerHTML = "<b>Нет данных</b>";
-    return;
-  }
-
-  let html = `<h2>Все тесты (${list.length})</h2>`;
-  html += `<table><thead><tr>
-            <th>Дата</th><th>Тест</th><th>Результат</th>
-          </tr></thead><tbody>`;
-
-  list.forEach(r => {
-    const dt = convertTimestampToDate(r.timestamp);
-    html += `<tr>
-              <td>${dt.toLocaleString("ru-RU")}</td>
-              <td>${r.testName || "?"}</td>
-              <td>${r.correct}/${r.total}</td>
-            </tr>`;
-  });
-
-  html += `</tbody></table>`;
-  output.innerHTML = html;
+async function getAllVisits() {
+  const snap = await getDocs(collection(db, 'visits'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// === Base 5 tests ===
-async function loadBaseTests() {
-  output.innerHTML = "Загружаю базовые тесты…";
-
-  const qBase = query(
-    collection(db, "results"),
-    limit(5)
-  );
-  const snap = await getDocs(qBase);
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  if (!list.length) {
-    output.innerHTML = "<b>Нет записей</b>";
-    return;
-  }
-
-  output.innerHTML = renderLatestVisits(list, "Базовые 5 тестов");
-}
-
-// === Visits summary ===
-async function loadVisits() {
-  output.innerHTML = "Загружаю посещения…";
-
-  const snap = await getDocs(collection(db, "visits"));
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  if (!list.length) {
-    output.innerHTML = "<b>Нет записей</b>";
-    return;
-  }
-
-  const grouped = groupVisitsByDay(list);
-
-  let html = `<h2>Посещения по дням</h2>`;
-  html += `<table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
-
-  for (const day in grouped) {
-    html += `<tr><td>${day}</td><td>${grouped[day]}</td></tr>`;
-  }
-
-  html += `</tbody></table>`;
-  output.innerHTML = html;
-}
-
-// === Visits detailed ===
-async function loadVisitsDetailed() {
-  output.innerHTML = "Загружаю подробно…";
-
+async function getLatestVisits(limitCount = 100) {
   const q = query(
     collection(db, "visits"),
     orderBy("timestamp", "desc"),
-    limit(100)
+    limit(limitCount)
   );
   const snap = await getDocs(q);
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  output.innerHTML = renderLatestVisits(list, "Последние 100 посещений");
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// === Export CSV ===
-function exportCSV() {
-  const table = output.querySelector("table");
-  if (!table) {
-    alert("Сначала загрузите данные");
-    return;
-  }
+document.getElementById('btnVisits').addEventListener('click', async () => {
+  output.innerHTML = "Загрузка статистики посещений…";
+  try {
+    const visits = await getAllVisits();
+    if(!visits.length){ output.innerHTML="<b>Нет записей visits</b>"; return; }
+    const grouped = groupVisitsByDay(visits);
+    let html = `<h2>Посещения по дням</h2><table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
+    for(const day in grouped) html += `<tr><td>${day}</td><td>${grouped[day]}</td></tr>`;
+    html += `</tbody></table>`;
+    output.innerHTML = html;
+  } catch(e){ console.error(e); output.innerHTML="<b>Ошибка загрузки статистики посещений</b>"; }
+});
 
-  let csv = "";
-  [...table.rows].forEach(row => {
-    const cells = [...row.cells].map(c => `"${c.innerText.replace(/"/g, '""')}"`);
-    csv += cells.join(",") + "\n";
-  });
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "export.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-//
-// ===============================
-// ========= BUTTONS =============
-// ===============================
-//
-
-document.getElementById("btnAll").addEventListener("click", loadAllTests);
-document.getElementById("btnBase").addEventListener("click", loadBaseTests);
-document.getElementById("btnVisits").addEventListener("click", loadVisits);
-document.getElementById("btnVisitsDetailed").addEventListener("click", loadVisitsDetailed);
-document.getElementById("btnExport").addEventListener("click", exportCSV);
+document.getElementById('btnVisitsDetailed').addEventListener('click', async () => {
+  output.innerHTML = "Загрузка подробной статистики посещений…";
+  try{
+    const list = await getLatestVisits(100);
+    if(!list.length){ output.innerHTML="<b>Нет записей visits</b>"; return; }
+    output.innerHTML = renderLatestVisits(list,"Последние 100 посещений");
+  } catch(e){ console.error(e); output.innerHTML="<b>Ошибка загрузки подробной статистики посещений</b>"; }
+});
 
 </script>
 
