@@ -23,15 +23,18 @@
 <body>
 
 <h1>Админка — статистика (все пользователи)</h1>
-<p class="note">
-Эта страница использует ту же логику чтения результатов, что и главная (index.html).
-</p>
+<p class="note">Эта страница использует ту же логику чтения результатов, что и index.html.</p>
 
 <div class="controls">
   <button id="btnAll">Загрузить статистику — все тесты</button>
   <button id="btnBase">Только базовые 5 тестов</button>
   <button id="btnVisits">Статистика посещений</button>
   <button id="btnVisitsDetailed">Подробная статистика посещений</button>
+
+  <!-- === NEW BUTTONS FOR KIDS === -->
+  <button id="btnKidsVisits">Kids статистика</button>
+  <button id="btnKidsVisitsDetailed">Kids подробно</button>
+
   <button id="btnExport">Экспорт CSV</button>
 </div>
 
@@ -58,95 +61,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ====== Base tests ======
-const baseTests = [
-  {id:'test1', title:'Alice & Tom', maxPoints:3},
-  {id:'test2', title:'Sports', maxPoints:3},
-  {id:'test3', title:'Holidays', maxPoints:5},
-  {id:'test4', title:'Environment', maxPoints:3},
-  {id:'test5', title:'Daily Life', maxPoints:5},
-];
-
-let testsJSON = {};
-let allTests = [...baseTests];
-let lastTableHtml = "";
-
-// UI
 const output = document.getElementById('output');
-const progressWrap = document.getElementById('progressWrap');
-const progressInner = document.getElementById('progressInner');
-const progressText = document.getElementById('progressText');
 
-function showProgress(show){
-  progressWrap.style.display = show ? 'block' : 'none';
-}
-function setProgress(percent, text=''){
-  const p = Math.round(percent);
-  progressInner.style.width = p + '%';
-  progressInner.innerText = p + '%';
-  progressText.innerText = text || '';
-}
-
-// ===== Load tests.json =====
-async function loadTestsJSON(){
-  try {
-    const res = await fetch('tests.json');
-    if(!res.ok){
-      throw new Error('Не удалось загрузить файл тестов');
-    }
-    testsJSON = await res.json();
-    allTests = [...baseTests];
-    for(const level in testsJSON){
-      for(const t of testsJSON[level]){
-        allTests.push({
-          id: t.id,
-          title: t.title,
-          maxPoints: t.maxPoints ?? 5
-        });
-      }
-    }
-  } catch(e){
-    console.error("Ошибка загрузки тестов:", e);
-    testsJSON = {};
-    allTests = [...baseTests];
-    alert('Не удалось загрузить тесты. Пожалуйста, попробуйте позже.');
-  }
-}
-
-// === get all user ids ===
-async function getAllUserIds(){
-  const snap = await getDocs(collection(db, 'results'));
-  return snap.docs.map(d => d.id);
-}
-
-// === get last score for test ===
-async function getLastScoreFor(uid, testId){
-  try {
-    const attemptsCol = collection(db, "results", uid, `${testId}_attempts`);
-    const snap = await getDocs(attemptsCol);
-    if(snap.empty) return 0;
-    const last = snap.docs[snap.docs.length - 1].data();
-    return Number(last.score ?? 0);
-  } catch {
-    return 0;
-  }
-}
-
-// ==========================
-// === VISITS STATISTICS ====
-// ==========================
-async function getAllVisits() {
-  const snap = await getDocs(collection(db, 'visits'));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-}
-
-// Преобразование метки времени Firebase в объект Date
+// === Convert timestamp helper ===
 function convertTimestampToDate(timestamp) {
-  const dt = new Date(timestamp.seconds * 1000);
-  return dt;
+  return new Date(timestamp.seconds * 1000);
 }
 
-// — сгруппировать посещения по дням —
+// === Group by day helper ===
 function groupVisitsByDay(visits) {
   const map = {};
   visits.forEach(v => {
@@ -157,59 +79,101 @@ function groupVisitsByDay(visits) {
   return map;
 }
 
-// — получить последние 100 —
-async function getLatestVisits(limitCount = 100) {
-  const q = query(
-    collection(db, "visits"),
-    orderBy("timestamp", "desc"),
-    limit(limitCount)
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-}
-
-// — таблица: последние посещения —
-function renderLatestVisits(list) {
-  let html = `<h3>Последние ${list.length} посещений</h3>`;
+// === Render last N visits ===
+function renderLatestVisits(list, title="Последние посещения") {
+  let html = `<h3>${title} (${list.length})</h3>`;
   html += `<table><thead><tr>
               <th>Дата / время</th>
-              <th>UID</th>
-              <th>Доп. сведения</th>
+              <th>User-Agent</th>
            </tr></thead><tbody>`;
 
   list.forEach(v => {
     const dt = convertTimestampToDate(v.timestamp);
     const dtFormatted = `${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU")}`;
-    const extra = JSON.stringify(v, null, 2)
-                    .replace(/"/g, "")
-                    .replace(/\{|\}/g, "");
     html += `<tr>
               <td>${dtFormatted}</td>
-              <td>${v.uid || '—'}</td>
-              <td><pre>${extra}</pre></td>
+              <td><pre>${v.userAgent || "—"}</pre></td>
             </tr>`;
   });
 
   html += `</tbody></table>`;
-  lastTableHtml = html;
   return html;
 }
 
-// ==========================
-// ====== BUTTONS ===========
-// ==========================
-document.getElementById('btnVisitsDetailed').addEventListener('click', async () => {
-  output.innerHTML = 'Загрузка последних посещений…';
+//
+// ===============================
+// ======== KIDS FUNCTIONS =======
+// ===============================
+//
+
+// === Kids — get all visits ===
+async function getAllKidsVisits() {
+  const snap = await getDocs(collection(db, 'visits_kids'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// === Kids — get last 100 visits ===
+async function getLatestKidsVisits(limitCount = 100) {
+  const qKids = query(
+    collection(db, "visits_kids"),
+    orderBy("timestamp", "desc"),
+    limit(limitCount)
+  );
+  const snap = await getDocs(qKids);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+//
+// ===============================
+// ========= BUTTONS =============
+// ===============================
+//
+
+// === Kids statistics by day ===
+document.getElementById("btnKidsVisits").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка статистики Kids…";
+
   try {
-    const list = await getLatestVisits(100);
-    if(!list.length){
-      output.innerHTML = '<b>Нет записей в visits</b>';
+    const visits = await getAllKidsVisits();
+    if (!visits.length) {
+      output.innerHTML = "<b>В visits_kids нет записей</b>";
       return;
     }
-    output.innerHTML = renderLatestVisits(list);
-  } catch (error) {
-    console.error('Ошибка при загрузке последних посещений:', error);
-    output.innerHTML = '<b>Произошла ошибка при загрузке данных. Попробуйте снова.</b>';
+
+    const grouped = groupVisitsByDay(visits);
+
+    let html = `<h2>Kids — посещения по дням</h2>`;
+    html += `<table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
+
+    for (const day in grouped) {
+      html += `<tr><td>${day}</td><td>${grouped[day]}</td></tr>`;
+    }
+
+    html += `</tbody></table>`;
+    output.innerHTML = html;
+
+  } catch (e) {
+    console.error(e);
+    output.innerHTML = "<b>Ошибка загрузки статистики Kids</b>";
+  }
+});
+
+// === Kids detailed (100 latest) ===
+document.getElementById("btnKidsVisitsDetailed").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка Kids подробно…";
+
+  try {
+    const list = await getLatestKidsVisits(100);
+    if (!list.length) {
+      output.innerHTML = "<b>Нет записей visits_kids</b>";
+      return;
+    }
+
+    output.innerHTML = renderLatestVisits(list, "Kids — последние посещения");
+
+  } catch (e) {
+    console.error(e);
+    output.innerHTML = "<b>Ошибка загрузки Kids подробно</b>";
   }
 });
 </script>
