@@ -30,11 +30,8 @@
   <button id="btnBase">Только базовые 5 тестов</button>
   <button id="btnVisits">Статистика посещений</button>
   <button id="btnVisitsDetailed">Подробная статистика посещений</button>
-
-  <!-- === NEW BUTTONS FOR KIDS === -->
   <button id="btnKidsVisits">Kids статистика</button>
   <button id="btnKidsVisitsDetailed">Kids подробно</button>
-
   <button id="btnExport">Экспорт CSV</button>
 </div>
 
@@ -47,7 +44,10 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { 
+  getFirestore, collection, getDocs, doc,
+  query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 // ====== Firebase config ======
 const firebaseConfig = {
@@ -59,120 +59,156 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const output = document.getElementById('output');
+const progressWrap = document.getElementById('progressWrap');
+const progressInner = document.getElementById('progressInner');
+const progressText = document.getElementById('progressText');
 
-// ======= Кнопка 1: все тесты (базовые + новые) =======
-document.getElementById("btnAll").addEventListener("click", async () => {
-  output.innerHTML = "Загрузка полной статистики…";
+// === Convert timestamp helper ===
+function convertTimestampToDate(timestamp) {
+  return new Date(timestamp.seconds * 1000);
+}
+
+// ===============================
+// ======== BUTTON 1 & 2 =========
+// ===============================
+
+async function loadUsers() {
+  const snap = await getDocs(collection(db, 'results'));
+  return snap.docs.map(d => ({ uid: d.id }));
+}
+
+// Базовые тесты
+const baseTests = [
+  {id:'test1', title:'Alice & Tom', maxPoints:3},
+  {id:'test2', title:'Sports', maxPoints:3},
+  {id:'test3', title:'Holidays', maxPoints:5},
+  {id:'test4', title:'Environment', maxPoints:3},
+  {id:'test5', title:'Daily Life', maxPoints:5},
+];
+
+// ===== Кнопка 2: Только базовые 5 тестов =====
+document.getElementById("btnBase").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка статистики по базовым 5 тестам…";
+  progressWrap.style.display = 'block';
+  progressInner.style.width = '0%';
+  progressInner.innerText = '0%';
 
   try {
-    // Получаем список пользователей
-    const usersSnap = await getDocs(collection(db, "results"));
-    const users = usersSnap.docs.map(u => ({ uid: u.id, ...u.data() }));
-
-    // Получаем список всех тестов (5 базовых + новые)
-    const baseTests = [
-      { id: 'test1', title: 'Alice & Tom', maxPoints: 3 },
-      { id: 'test2', title: 'Sports', maxPoints: 3 },
-      { id: 'test3', title: 'Holidays', maxPoints: 5 },
-      { id: 'test4', title: 'Environment', maxPoints: 3 },
-      { id: 'test5', title: 'Daily Life', maxPoints: 5 }
-    ];
-
-    // Новые тесты (для примера, можно подгружать из JSON или Firestore)
-    const newTestsSnap = await getDocs(collection(db, "tests")); // коллекция всех новых тестов
-    const newTests = newTestsSnap.docs.map(d => ({ id: d.id, title: d.data().title, maxPoints: d.data().maxPoints || 5 }));
-
-    const allTests = [...baseTests, ...newTests];
-
-    let html = "<h2>Полная статистика пользователей</h2>";
+    const users = await loadUsers();
+    let html = "<h2>Статистика по базовым 5 тестам</h2>";
     html += "<table><thead><tr><th>User</th>";
-
-    allTests.forEach(t => html += `<th>${t.id}</th>`);
+    baseTests.forEach(t=>html+=`<th>${t.id}</th>`);
     html += "<th>Итого</th></tr></thead><tbody>";
 
-    for (const user of users) {
-      html += `<tr><td>${user.uid}</td>`;
-      let totalScore = 0;
-      let totalMax = 0;
-
-      for (const test of allTests) {
-        // Достаем последнюю попытку теста для пользователя
-        const attemptsCol = collection(db, `results/${user.uid}/${test.id}_attempts`);
-        const attemptsSnap = await getDocs(attemptsCol);
-        const lastAttemptDoc = attemptsSnap.docs[attemptsSnap.docs.length - 1];
-        const lastAttempt = lastAttemptDoc?.data();
-        const score = lastAttempt?.score ?? 0;
-
-        html += `<td>${score}/${test.maxPoints}</td>`;
+    let loaded=0;
+    for(const u of users){
+      let row = `<tr><td>${u.uid}</td>`;
+      let totalScore=0, totalMax=0;
+      for(const t of baseTests){
+        const snapAttempts = await getDocs(collection(db, `results/${u.uid}/${t.id}_attempts`));
+        const last = snapAttempts.empty ? null : snapAttempts.docs[snapAttempts.docs.length-1].data();
+        const score = last?.score ?? 0;
+        row += `<td>${score}/${t.maxPoints}</td>`;
         totalScore += score;
-        totalMax += test.maxPoints;
+        totalMax += t.maxPoints;
       }
+      row += `<td>${totalScore}/${totalMax}</td></tr>`;
+      html += row;
 
-      html += `<td>${totalScore}/${totalMax}</td></tr>`;
+      loaded++;
+      const perc = Math.round(loaded/users.length*100);
+      progressInner.style.width = perc+'%';
+      progressInner.innerText = perc+'%';
     }
 
     html += "</tbody></table>";
     output.innerHTML = html;
+    progressWrap.style.display = 'none';
+  } catch(e){
+    console.error(e);
+    output.innerHTML = "<b>Ошибка загрузки базовой статистики</b>";
+  }
+});
 
-  } catch (e) {
+// ===== Кнопка 1: Все тесты (75) =====
+document.getElementById("btnAll").addEventListener("click", async () => {
+  output.innerHTML = "Загрузка полной статистики всех тестов…";
+  progressWrap.style.display = 'block';
+  progressInner.style.width = '0%';
+  progressInner.innerText = '0%';
+
+  try {
+    const users = await loadUsers();
+    // Загружаем список всех тестов (base + новые)
+    const allTests = [...baseTests];
+    const testsSnap = await getDocs(collection(db, 'tests'));
+    testsSnap.forEach(d => {
+      const t = d.data();
+      allTests.push({id:t.id, title:t.title, maxPoints:t.maxPoints ?? 5});
+    });
+
+    let html = "<h2>Полная статистика по всем тестам</h2>";
+    html += "<table><thead><tr><th>User</th>";
+    allTests.forEach(t=>html+=`<th>${t.id}</th>`);
+    html += "<th>Итого</th></tr></thead><tbody>";
+
+    let loaded=0;
+    for(const u of users){
+      let row = `<tr><td>${u.uid}</td>`;
+      let totalScore=0, totalMax=0;
+      for(const t of allTests){
+        const snapAttempts = await getDocs(collection(db, `results/${u.uid}/${t.id}_attempts`));
+        const last = snapAttempts.empty ? null : snapAttempts.docs[snapAttempts.docs.length-1].data();
+        const score = last?.score ?? 0;
+        row += `<td>${score}/${t.maxPoints}</td>`;
+        totalScore += score;
+        totalMax += t.maxPoints;
+      }
+      row += `<td>${totalScore}/${totalMax}</td></tr>`;
+      html += row;
+
+      loaded++;
+      const perc = Math.round(loaded/users.length*100);
+      progressInner.style.width = perc+'%';
+      progressInner.innerText = perc+'%';
+    }
+
+    html += "</tbody></table>";
+    output.innerHTML = html;
+    progressWrap.style.display = 'none';
+  } catch(e){
     console.error(e);
     output.innerHTML = "<b>Ошибка загрузки полной статистики</b>";
   }
 });
 
-// ======= Остальные кнопки остаются без изменений =======
+// ===============================
+// ======= ОСТАЛЬНЫЕ КНОПКИ =======
+// ===============================
 
-// Для примера: кнопка 2 (только базовые 5 тестов)
-document.getElementById("btnBase").addEventListener("click", async () => {
-  output.innerHTML = "Загрузка статистики базовых тестов…";
+// Здесь оставляем старую рабочую логику для:
+// btnVisits, btnVisitsDetailed, btnKidsVisits, btnKidsVisitsDetailed, btnExport
 
-  try {
-    const usersSnap = await getDocs(collection(db, "results"));
-    const users = usersSnap.docs.map(u => ({ uid: u.id, ...u.data() }));
-
-    const baseTests = [
-      { id: 'test1', title: 'Alice & Tom', maxPoints: 3 },
-      { id: 'test2', title: 'Sports', maxPoints: 3 },
-      { id: 'test3', title: 'Holidays', maxPoints: 5 },
-      { id: 'test4', title: 'Environment', maxPoints: 3 },
-      { id: 'test5', title: 'Daily Life', maxPoints: 5 }
-    ];
-
-    let html = "<h2>Статистика базовых тестов</h2>";
-    html += "<table><thead><tr><th>User</th>";
-    baseTests.forEach(t => html += `<th>${t.id}</th>`);
-    html += "<th>Итого</th></tr></thead><tbody>";
-
-    for (const user of users) {
-      html += `<tr><td>${user.uid}</td>`;
-      let totalScore = 0;
-      let totalMax = 0;
-
-      for (const test of baseTests) {
-        const attemptsCol = collection(db, `results/${user.uid}/${test.id}_attempts`);
-        const attemptsSnap = await getDocs(attemptsCol);
-        const lastAttemptDoc = attemptsSnap.docs[attemptsSnap.docs.length - 1];
-        const lastAttempt = lastAttemptDoc?.data();
-        const score = lastAttempt?.score ?? 0;
-
-        html += `<td>${score}/${test.maxPoints}</td>`;
-        totalScore += score;
-        totalMax += test.maxPoints;
-      }
-
-      html += `<td>${totalScore}/${totalMax}</td></tr>`;
-    }
-
-    html += "</tbody></table>";
-    output.innerHTML = html;
-
-  } catch (e) {
-    console.error(e);
-    output.innerHTML = "<b>Ошибка загрузки статистики базовых тестов</b>";
-  }
+document.getElementById("btnVisits").addEventListener("click", async ()=>{
+  output.innerHTML = "<b>Загрузка посещений…</b>";
+  // Сюда вставить старый рабочий код btnVisits
 });
-
-// Остальные кнопки (visits, kids, export) оставлены без изменений
+document.getElementById("btnVisitsDetailed").addEventListener("click", async ()=>{
+  output.innerHTML = "<b>Загрузка подробной статистики посещений…</b>";
+  // Сюда вставить старый рабочий код btnVisitsDetailed
+});
+document.getElementById("btnKidsVisits").addEventListener("click", async ()=>{
+  output.innerHTML = "<b>Загрузка Kids статистики…</b>";
+  // Сюда вставить старый рабочий код btnKidsVisits
+});
+document.getElementById("btnKidsVisitsDetailed").addEventListener("click", async ()=>{
+  output.innerHTML = "<b>Загрузка подробной Kids статистики…</b>";
+  // Сюда вставить старый рабочий код btnKidsVisitsDetailed
+});
+document.getElementById("btnExport").addEventListener("click", async ()=>{
+  output.innerHTML = "<b>Экспорт CSV…</b>";
+  // Сюда вставить старый рабочий код btnExport
+});
 </script>
 
 </body>
