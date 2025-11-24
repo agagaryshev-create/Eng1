@@ -106,13 +106,13 @@ function renderLatestVisits(list, title="Последние посещения")
 // ===============================
 //
 
-// === Kids — get all visits ===
+// === Kids — all visits ===
 async function getAllKidsVisits() {
   const snap = await getDocs(collection(db, 'visits_kids'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// === Kids — get last 100 visits ===
+// === Kids — last 100 ===
 async function getLatestKidsVisits(limitCount = 100) {
   const qKids = query(
     collection(db, "visits_kids"),
@@ -123,13 +123,7 @@ async function getLatestKidsVisits(limitCount = 100) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-//
-// ===============================
-// ========= BUTTONS =============
-// ===============================
-//
-
-// === Kids statistics by day ===
+// === Kids visits by day ===
 document.getElementById("btnKidsVisits").addEventListener("click", async () => {
   output.innerHTML = "Загрузка статистики Kids…";
 
@@ -158,7 +152,7 @@ document.getElementById("btnKidsVisits").addEventListener("click", async () => {
   }
 });
 
-// === Kids detailed (100 latest) ===
+// === Kids detailed ===
 document.getElementById("btnKidsVisitsDetailed").addEventListener("click", async () => {
   output.innerHTML = "Загрузка Kids подробно…";
 
@@ -176,6 +170,139 @@ document.getElementById("btnKidsVisitsDetailed").addEventListener("click", async
     output.innerHTML = "<b>Ошибка загрузки Kids подробно</b>";
   }
 });
+
+
+//
+// ===============================
+// === ORIGINAL TEST STATISTICS ==
+// ===============================
+//
+
+// === ALL tests ===
+async function loadAllTests() {
+  output.innerHTML = "Загружаю все тесты…";
+
+  const snap = await getDocs(collection(db, "results"));
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (!list.length) {
+    output.innerHTML = "<b>Нет данных</b>";
+    return;
+  }
+
+  let html = `<h2>Все тесты (${list.length})</h2>`;
+  html += `<table><thead><tr>
+            <th>Дата</th><th>Тест</th><th>Результат</th>
+          </tr></thead><tbody>`;
+
+  list.forEach(r => {
+    const dt = convertTimestampToDate(r.timestamp);
+    html += `<tr>
+              <td>${dt.toLocaleString("ru-RU")}</td>
+              <td>${r.testName || "?"}</td>
+              <td>${r.correct}/${r.total}</td>
+            </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  output.innerHTML = html;
+}
+
+// === Base 5 tests ===
+async function loadBaseTests() {
+  output.innerHTML = "Загружаю базовые тесты…";
+
+  const qBase = query(
+    collection(db, "results"),
+    limit(5)
+  );
+  const snap = await getDocs(qBase);
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (!list.length) {
+    output.innerHTML = "<b>Нет записей</b>";
+    return;
+  }
+
+  output.innerHTML = renderLatestVisits(list, "Базовые 5 тестов");
+}
+
+// === Visits summary ===
+async function loadVisits() {
+  output.innerHTML = "Загружаю посещения…";
+
+  const snap = await getDocs(collection(db, "visits"));
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (!list.length) {
+    output.innerHTML = "<b>Нет записей</b>";
+    return;
+  }
+
+  const grouped = groupVisitsByDay(list);
+
+  let html = `<h2>Посещения по дням</h2>`;
+  html += `<table><thead><tr><th>Дата</th><th>Кол-во</th></tr></thead><tbody>`;
+
+  for (const day in grouped) {
+    html += `<tr><td>${day}</td><td>${grouped[day]}</td></tr>`;
+  }
+
+  html += `</tbody></table>`;
+  output.innerHTML = html;
+}
+
+// === Visits detailed ===
+async function loadVisitsDetailed() {
+  output.innerHTML = "Загружаю подробно…";
+
+  const q = query(
+    collection(db, "visits"),
+    orderBy("timestamp", "desc"),
+    limit(100)
+  );
+  const snap = await getDocs(q);
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  output.innerHTML = renderLatestVisits(list, "Последние 100 посещений");
+}
+
+// === Export CSV ===
+function exportCSV() {
+  const table = output.querySelector("table");
+  if (!table) {
+    alert("Сначала загрузите данные");
+    return;
+  }
+
+  let csv = "";
+  [...table.rows].forEach(row => {
+    const cells = [...row.cells].map(c => `"${c.innerText.replace(/"/g, '""')}"`);
+    csv += cells.join(",") + "\n";
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "export.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+//
+// ===============================
+// ========= BUTTONS =============
+// ===============================
+//
+
+document.getElementById("btnAll").addEventListener("click", loadAllTests);
+document.getElementById("btnBase").addEventListener("click", loadBaseTests);
+document.getElementById("btnVisits").addEventListener("click", loadVisits);
+document.getElementById("btnVisitsDetailed").addEventListener("click", loadVisitsDetailed);
+document.getElementById("btnExport").addEventListener("click", exportCSV);
+
 </script>
 
 </body>
