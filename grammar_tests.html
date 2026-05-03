@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Grammar Tests</title>
+
+<style>
+body {
+  font-family: Arial;
+  max-width: 800px;
+  margin: 20px auto;
+  background: #f9f9f9;
+  padding: 10px;
+}
+
+h1 { text-align: center; }
+
+button {
+  padding: 10px 14px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid #333;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin-top: 15px;
+  border-radius: 8px;
+}
+
+.question {
+  margin-bottom: 15px;
+}
+
+.correct { background: #b6f5c6; }
+.wrong { background: #f5b6b6; }
+
+#result {
+  margin-top: 15px;
+  font-weight: bold;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📊 Grammar Tests</h1>
+
+<div style="text-align:center;">
+  <button onclick="showTest('be')">To be / have / there is</button>
+  <button onclick="showTest('present')">Present Simple</button>
+  <button onclick="location.href='index.html'">← Back</button>
+</div>
+
+<div id="testArea"></div>
+
+<div style="text-align:center;">
+  <button onclick="showResult()">📊 Check result</button>
+</div>
+
+<div id="result"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// ================= Firebase =================
+const firebaseConfig = {
+  apiKey: "AIzaSyCi7KCyrHNE_D1Eq5WGb8Zrr-loh-xFyj0",
+  authDomain: "engtestoge.firebaseapp.com",
+  projectId: "engtestoge"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+});
+
+// ================= State =================
+let score = 0;
+let total = 0;
+let answered = new Set();
+let currentTestId = "";
+
+// ================= URL topic =================
+const urlParams = new URLSearchParams(window.location.search);
+const topic = urlParams.get("topic");
+
+if (topic === "be") showTest("be");
+if (topic === "present") showTest("present");
+
+// ================= Tests =================
+function showTest(type) {
+  score = 0;
+  answered = new Set();
+  currentTestId = type;
+
+  let html = "";
+
+  if (type === "be") {
+    total = 3;
+
+    html = `
+    <div class="card">
+      <h3>To be / have / there is</h3>
+
+      <div class="question">
+        1. She ___ a book.<br>
+        <button onclick="check(this,'q1',false)">have</button>
+        <button onclick="check(this,'q1',true)">has</button>
+      </div>
+
+      <div class="question">
+        2. There ___ two apples.<br>
+        <button onclick="check(this,'q2',false)">is</button>
+        <button onclick="check(this,'q2',true)">are</button>
+      </div>
+
+      <div class="question">
+        3. I ___ 15 years old.<br>
+        <button onclick="check(this,'q3',true)">am</button>
+        <button onclick="check(this,'q3',false)">is</button>
+      </div>
+    </div>`;
+  }
+
+  if (type === "present") {
+    total = 2;
+
+    html = `
+    <div class="card">
+      <h3>Present Simple</h3>
+
+      <div class="question">
+        1. He ___ football every day.<br>
+        <button onclick="check(this,'q1',false)">play</button>
+        <button onclick="check(this,'q1',true)">plays</button>
+      </div>
+
+      <div class="question">
+        2. They ___ to school.<br>
+        <button onclick="check(this,'q2',true)">go</button>
+        <button onclick="check(this,'q2',false)">goes</button>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById("testArea").innerHTML = html;
+  document.getElementById("result").innerText = "";
+}
+
+// ================= Check =================
+function check(btn, qid, isCorrect) {
+  if (answered.has(qid)) return;
+
+  answered.add(qid);
+  btn.disabled = true;
+
+  if (isCorrect) {
+    btn.classList.add("correct");
+    score++;
+  } else {
+    btn.classList.add("wrong");
+  }
+}
+
+// ================= Result + Save =================
+async function showResult() {
+
+  const resultText = `Score: ${score} / ${total}`;
+  document.getElementById("result").innerText = resultText;
+
+  if (!currentUser) return;
+
+  try {
+    await addDoc(
+      collection(db, "results", currentUser.uid, "grammar_tests"),
+      {
+        testId: currentTestId,
+        score: score,
+        maxPoints: total,
+        date: serverTimestamp()
+      }
+    );
+  } catch (e) {
+    console.error(e);
+  }
+
+  document.getElementById("result").innerHTML = `
+    ${resultText}<br><br>
+
+    <button onclick="location.href='grammar.html'">
+      📘 Back to theory
+    </button>
+
+    <button onclick="location.reload()">
+      🔁 Try again
+    </button>
+  `;
+}
+
+window.showTest = showTest;
+window.check = check;
+window.showResult = showResult;
+
+</script>
+
+</body>
+</html>
