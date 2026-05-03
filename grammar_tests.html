@@ -105,6 +105,7 @@ function selectTopic(t) {
     <button onclick="showTest('${t}_easy')">🟢 Easy</button>
     <button onclick="showTest('${t}_normal')">🟡 Normal</button>
     <button onclick="showTest('${t}_hard')">🔴 Exam</button>
+      <button onclick="showTest('${t}_upper')">🟣 Upper-Intermediate</button>
   `;
 }
 
@@ -171,6 +172,25 @@ function showTest(type) {
     </div>`;
   }
 
+  if (type === "be_upper") {
+  total = 10;
+
+  html = `
+  <div class="card"><h3>Upper-Intermediate - Mixed Structures</h3>
+
+  ${q("q1","There ___ been a mistake in the system.","has","have")}
+  ${q("q2","She ___ got a lot of experience in finance.","has","have")}
+  ${q("q3","There ___ no evidence available.","is","are")}
+  ${q("q4","He ___ been working here since 2020.","has","have")}
+  ${q("q5","There ___ several reasons for this decision.","are","is")}
+  ${q("q6","I ___ never seen such a situation before.","have","has")}
+  ${q("q7","There ___ been changes in the schedule.","have","has")}
+  ${q("q8","She ___ already finished the report.","has","have")}
+  ${q("q9","There ___ a strong connection between them.","is","are")}
+  ${q("q10","We ___ got enough data to proceed.","have","has")}
+
+  </div>`;
+}
   // ================= PRESENT SIMPLE =================
   if (type === "present_easy") {
     total = 10;
@@ -226,6 +246,25 @@ function showTest(type) {
     </div>`;
   }
 
+  if (type === "present_upper") {
+  total = 10;
+
+  html = `
+  <div class="card"><h3>Upper-Intermediate - Present Simple</h3>
+
+  ${q("q1","He rarely ___ coffee in the morning.","drinks","drink")}
+  ${q("q2","She ___ not usually agree with this idea.","does","do")}
+  ${q("q3","They ___ often discuss financial issues.","discuss","discusses")}
+  ${q("q4","The company ___ new policies every year.","introduces","introduce")}
+  ${q("q5","He ___ not understand the problem clearly.","does","do")}
+  ${q("q6","We ___ always check the results carefully.","do","does")}
+  ${q("q7","She ___ usually works late.","works","work")}
+  ${q("q8","The system ___ not allow manual changes.","does","do")}
+  ${q("q9","They ___ rarely make mistakes.","make","makes")}
+  ${q("q10","He ___ always knows the answer.","knows","know")}
+
+  </div>`;
+}
   document.getElementById("testArea").innerHTML = html;
   document.getElementById("result").innerText = "";
 }
