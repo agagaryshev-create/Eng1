@@ -50,14 +50,14 @@ button {
 <h1>📊 Grammar Tests</h1>
 
 <div style="text-align:center;">
+  <button onclick="selectTopic('be')">📘 To be / have / there is</button>
+  <button onclick="selectTopic('present')">📗 Present Simple</button>
   <button onclick="location.href='index.html'">← Back</button>
 </div>
 
-<div style="text-align:center;">
-  <button onclick="showTest('be_easy')">🟢 Level 1</button>
-  <button onclick="showTest('be_normal')">🟡 Level 2</button>
-  <button onclick="showTest('be_hard')">🔴 Level 3</button>
-</div>
+<hr>
+
+<div id="levels" style="text-align:center;"></div>
 
 <div id="testArea"></div>
 
@@ -90,11 +90,23 @@ onAuthStateChanged(auth, (user) => {
   currentUser = user;
 });
 
-// ================= State =================
+// ================= STATE =================
+let topic = "";
 let score = 0;
 let total = 0;
 let answered = new Set();
 let currentTestId = "";
+
+// ================= TOPIC =================
+function selectTopic(t) {
+  topic = t;
+
+  document.getElementById("levels").innerHTML = `
+    <button onclick="showTest('${t}_easy')">🟢 Easy</button>
+    <button onclick="showTest('${t}_normal')">🟡 Normal</button>
+    <button onclick="showTest('${t}_hard')">🔴 Exam</button>
+  `;
+}
 
 // ================= TESTS =================
 function showTest(type) {
@@ -104,66 +116,113 @@ function showTest(type) {
 
   let html = "";
 
-  // 🟢 EASY
+  // ================= TO BE =================
   if (type === "be_easy") {
     total = 10;
 
     html = `
-    <div class="card">
-      <h3>Level 1 (Easy)</h3>
-
-      ${q("q1","I ___ a student.","am","is")}
-      ${q("q2","He ___ happy.","is","are")}
-      ${q("q3","They ___ at home.","are","is")}
-      ${q("q4","She ___ my friend.","is","are")}
-      ${q("q5","We ___ students.","are","is")}
-      ${q("q6","I ___ 15 years old.","am","is")}
-      ${q("q7","It ___ cold.","is","are")}
-      ${q("q8","They ___ my parents.","are","is")}
-      ${q("q9","She ___ a doctor.","is","are")}
-      ${q("q10","We ___ friends.","are","is")}
+    <div class="card"><h3>To be - Easy</h3>
+    ${q("q1","I ___ a student.","am","is")}
+    ${q("q2","He ___ happy.","is","are")}
+    ${q("q3","They ___ at home.","are","is")}
+    ${q("q4","She ___ my friend.","is","are")}
+    ${q("q5","We ___ students.","are","is")}
+    ${q("q6","I ___ 15 years old.","am","is")}
+    ${q("q7","It ___ cold.","is","are")}
+    ${q("q8","They ___ my parents.","are","is")}
+    ${q("q9","She ___ a doctor.","is","are")}
+    ${q("q10","We ___ friends.","are","is")}
     </div>`;
   }
 
-  // 🟡 NORMAL
   if (type === "be_normal") {
     total = 10;
 
     html = `
-    <div class="card">
-      <h3>Level 2 (Normal)</h3>
-
-      ${q("q1","She ___ a book.","has","have")}
-      ${q("q2","I ___ a car.","have","has")}
-      ${q("q3","There ___ a cat.","is","are")}
-      ${q("q4","There ___ two apples.","are","is")}
-      ${q("q5","He ___ a brother.","has","have")}
-      ${q("q6","We ___ a house.","have","has")}
-      ${q("q7","There ___ many students.","are","is")}
-      ${q("q8","She ___ a dog.","has","have")}
-      ${q("q9","I ___ a pen.","have","has")}
-      ${q("q10","There ___ a problem.","is","are")}
+    <div class="card"><h3>To be / have / there is - Normal</h3>
+    ${q("q1","She ___ a book.","has","have")}
+    ${q("q2","I ___ a car.","have","has")}
+    ${q("q3","There ___ a cat.","is","are")}
+    ${q("q4","There ___ two apples.","are","is")}
+    ${q("q5","He ___ a brother.","has","have")}
+    ${q("q6","We ___ a house.","have","has")}
+    ${q("q7","There ___ many students.","are","is")}
+    ${q("q8","She ___ a dog.","has","have")}
+    ${q("q9","I ___ a pen.","have","has")}
+    ${q("q10","There ___ a problem.","is","are")}
     </div>`;
   }
 
-  // 🔴 HARD
   if (type === "be_hard") {
     total = 10;
 
     html = `
-    <div class="card">
-      <h3>Level 3 (Exam)</h3>
+    <div class="card"><h3>To be / have / there is - Exam</h3>
+    ${q("q1","My sister ___ friends.","has","have")}
+    ${q("q2","There ___ not enough time.","is","are")}
+    ${q("q3","I ___ never late.","am","is")}
+    ${q("q4","There ___ three books.","are","is")}
+    ${q("q5","He ___ very busy.","is","are")}
+    ${q("q6","We ___ homework.","have","has")}
+    ${q("q7","There ___ people in park.","are","is")}
+    ${q("q8","She ___ a phone.","has","have")}
+    ${q("q9","I ___ no idea.","have","has")}
+    ${q("q10","There ___ nothing in box.","is","are")}
+    </div>`;
+  }
 
-      ${q("q1","My sister ___ friends.","has","have")}
-      ${q("q2","There ___ not enough time.","is","are")}
-      ${q("q3","I ___ never late.","am","is")}
-      ${q("q4","There ___ three books.","are","is")}
-      ${q("q5","He ___ very busy.","is","are")}
-      ${q("q6","We ___ homework.","have","has")}
-      ${q("q7","There ___ people in park.","are","is")}
-      ${q("q8","She ___ a phone.","has","have")}
-      ${q("q9","I ___ no idea.","have","has")}
-      ${q("q10","There ___ nothing in box.","is","are")}
+  // ================= PRESENT SIMPLE =================
+  if (type === "present_easy") {
+    total = 10;
+
+    html = `
+    <div class="card"><h3>Present Simple - Affirmative</h3>
+    ${q("q1","He ___ football.","plays","play")}
+    ${q("q2","She ___ books.","reads","read")}
+    ${q("q3","I ___ to school.","go","goes")}
+    ${q("q4","They ___ TV.","watch","watches")}
+    ${q("q5","We ___ English.","study","studies")}
+    ${q("q6","He ___ lunch.","eats","eat")}
+    ${q("q7","She ___ music.","likes","like")}
+    ${q("q8","I ___ home.","go","goes")}
+    ${q("q9","They ___ games.","play","plays")}
+    ${q("q10","It ___ fast.","runs","run")}
+    </div>`;
+  }
+
+  if (type === "present_normal") {
+    total = 10;
+
+    html = `
+    <div class="card"><h3>Present Simple - Negative</h3>
+    ${q("q1","He ___ not like coffee.","doesn't","don't")}
+    ${q("q2","She ___ not go to school.","doesn't","don't")}
+    ${q("q3","They ___ not play football.","don't","doesn't")}
+    ${q("q4","I ___ not watch TV.","don't","doesn't")}
+    ${q("q5","We ___ not live here.","don't","doesn't")}
+    ${q("q6","He ___ not eat meat.","doesn't","don't")}
+    ${q("q7","She ___ not work today.","doesn't","don't")}
+    ${q("q8","They ___ not study English.","don't","doesn't")}
+    ${q("q9","I ___ not know.","don't","doesn't")}
+    ${q("q10","It ___ not rain often.","doesn't","don't")}
+    </div>`;
+  }
+
+  if (type === "present_hard") {
+    total = 10;
+
+    html = `
+    <div class="card"><h3>Present Simple - Questions</h3>
+    ${q("q1","___ he like tea?","Does","Do")}
+    ${q("q2","___ they go to school?","Do","Does")}
+    ${q("q3","___ she work here?","Does","Do")}
+    ${q("q4","___ you play football?","Do","Does")}
+    ${q("q5","___ it rain often?","Does","Do")}
+    ${q("q6","___ we need help?","Do","Does")}
+    ${q("q7","___ he live here?","Does","Do")}
+    ${q("q8","___ they study English?","Do","Does")}
+    ${q("q9","___ she know him?","Does","Do")}
+    ${q("q10","___ I need this book?","Do","Does")}
     </div>`;
   }
 
@@ -215,18 +274,12 @@ async function showResult() {
 
   document.getElementById("result").innerHTML = `
     ${res}<br><br>
-
-    <button onclick="location.href='grammar.html'">
-      📘 Back to theory
-    </button>
-
-    <button onclick="location.reload()">
-      🔁 Try again
-    </button>
+    <button onclick="location.reload()">🔁 Try again</button>
   `;
 }
 
 // expose
+window.selectTopic = selectTopic;
 window.showTest = showTest;
 window.check = check;
 window.showResult = showResult;
