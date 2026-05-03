@@ -7,7 +7,7 @@
 <style>
 body {
   font-family: Arial;
-  max-width: 800px;
+  max-width: 850px;
   margin: 20px auto;
   background: #f9f9f9;
   padding: 10px;
@@ -50,9 +50,13 @@ button {
 <h1>📊 Grammar Tests</h1>
 
 <div style="text-align:center;">
-  <button onclick="showTest('be')">To be / have / there is</button>
-  <button onclick="showTest('present')">Present Simple</button>
   <button onclick="location.href='index.html'">← Back</button>
+</div>
+
+<div style="text-align:center;">
+  <button onclick="showTest('be_easy')">🟢 Level 1</button>
+  <button onclick="showTest('be_normal')">🟡 Level 2</button>
+  <button onclick="showTest('be_hard')">🔴 Level 3</button>
 </div>
 
 <div id="testArea"></div>
@@ -92,14 +96,7 @@ let total = 0;
 let answered = new Set();
 let currentTestId = "";
 
-// ================= URL topic =================
-const urlParams = new URLSearchParams(window.location.search);
-const topic = urlParams.get("topic");
-
-if (topic === "be") showTest("be");
-if (topic === "present") showTest("present");
-
-// ================= Tests =================
+// ================= TESTS =================
 function showTest(type) {
   score = 0;
   answered = new Set();
@@ -107,51 +104,66 @@ function showTest(type) {
 
   let html = "";
 
-  if (type === "be") {
-    total = 3;
+  // 🟢 EASY
+  if (type === "be_easy") {
+    total = 10;
 
     html = `
     <div class="card">
-      <h3>To be / have / there is</h3>
+      <h3>Level 1 (Easy)</h3>
 
-      <div class="question">
-        1. She ___ a book.<br>
-        <button onclick="check(this,'q1',false)">have</button>
-        <button onclick="check(this,'q1',true)">has</button>
-      </div>
-
-      <div class="question">
-        2. There ___ two apples.<br>
-        <button onclick="check(this,'q2',false)">is</button>
-        <button onclick="check(this,'q2',true)">are</button>
-      </div>
-
-      <div class="question">
-        3. I ___ 15 years old.<br>
-        <button onclick="check(this,'q3',true)">am</button>
-        <button onclick="check(this,'q3',false)">is</button>
-      </div>
+      ${q("q1","I ___ a student.","am","is")}
+      ${q("q2","He ___ happy.","is","are")}
+      ${q("q3","They ___ at home.","are","is")}
+      ${q("q4","She ___ my friend.","is","are")}
+      ${q("q5","We ___ students.","are","is")}
+      ${q("q6","I ___ 15 years old.","am","is")}
+      ${q("q7","It ___ cold.","is","are")}
+      ${q("q8","They ___ my parents.","are","is")}
+      ${q("q9","She ___ a doctor.","is","are")}
+      ${q("q10","We ___ friends.","are","is")}
     </div>`;
   }
 
-  if (type === "present") {
-    total = 2;
+  // 🟡 NORMAL
+  if (type === "be_normal") {
+    total = 10;
 
     html = `
     <div class="card">
-      <h3>Present Simple</h3>
+      <h3>Level 2 (Normal)</h3>
 
-      <div class="question">
-        1. He ___ football every day.<br>
-        <button onclick="check(this,'q1',false)">play</button>
-        <button onclick="check(this,'q1',true)">plays</button>
-      </div>
+      ${q("q1","She ___ a book.","has","have")}
+      ${q("q2","I ___ a car.","have","has")}
+      ${q("q3","There ___ a cat.","is","are")}
+      ${q("q4","There ___ two apples.","are","is")}
+      ${q("q5","He ___ a brother.","has","have")}
+      ${q("q6","We ___ a house.","have","has")}
+      ${q("q7","There ___ many students.","are","is")}
+      ${q("q8","She ___ a dog.","has","have")}
+      ${q("q9","I ___ a pen.","have","has")}
+      ${q("q10","There ___ a problem.","is","are")}
+    </div>`;
+  }
 
-      <div class="question">
-        2. They ___ to school.<br>
-        <button onclick="check(this,'q2',true)">go</button>
-        <button onclick="check(this,'q2',false)">goes</button>
-      </div>
+  // 🔴 HARD
+  if (type === "be_hard") {
+    total = 10;
+
+    html = `
+    <div class="card">
+      <h3>Level 3 (Exam)</h3>
+
+      ${q("q1","My sister ___ friends.","has","have")}
+      ${q("q2","There ___ not enough time.","is","are")}
+      ${q("q3","I ___ never late.","am","is")}
+      ${q("q4","There ___ three books.","are","is")}
+      ${q("q5","He ___ very busy.","is","are")}
+      ${q("q6","We ___ homework.","have","has")}
+      ${q("q7","There ___ people in park.","are","is")}
+      ${q("q8","She ___ a phone.","has","have")}
+      ${q("q9","I ___ no idea.","have","has")}
+      ${q("q10","There ___ nothing in box.","is","are")}
     </div>`;
   }
 
@@ -159,7 +171,17 @@ function showTest(type) {
   document.getElementById("result").innerText = "";
 }
 
-// ================= Check =================
+// ================= QUESTION =================
+function q(id, text, correct, wrong) {
+  return `
+  <div class="question">
+    ${text}<br>
+    <button onclick="check(this,'${id}',true)">${correct}</button>
+    <button onclick="check(this,'${id}',false)">${wrong}</button>
+  </div>`;
+}
+
+// ================= CHECK =================
 function check(btn, qid, isCorrect) {
   if (answered.has(qid)) return;
 
@@ -174,30 +196,25 @@ function check(btn, qid, isCorrect) {
   }
 }
 
-// ================= Result + Save =================
+// ================= RESULT =================
 async function showResult() {
+  const res = `Score: ${score} / ${total}`;
+  document.getElementById("result").innerText = res;
 
-  const resultText = `Score: ${score} / ${total}`;
-  document.getElementById("result").innerText = resultText;
-
-  if (!currentUser) return;
-
-  try {
+  if (currentUser) {
     await addDoc(
       collection(db, "results", currentUser.uid, "grammar_tests"),
       {
         testId: currentTestId,
-        score: score,
+        score,
         maxPoints: total,
         date: serverTimestamp()
       }
     );
-  } catch (e) {
-    console.error(e);
   }
 
   document.getElementById("result").innerHTML = `
-    ${resultText}<br><br>
+    ${res}<br><br>
 
     <button onclick="location.href='grammar.html'">
       📘 Back to theory
@@ -209,6 +226,7 @@ async function showResult() {
   `;
 }
 
+// expose
 window.showTest = showTest;
 window.check = check;
 window.showResult = showResult;
