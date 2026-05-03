@@ -228,43 +228,28 @@ function showTest(type) {
     </div>`;
   }
 
-  if (type === "present_hard") {
-    total = 10;
-
-    html = `
-    <div class="card"><h3>Present Simple - Questions</h3>
-    ${q("q1","___ he like tea?","Does","Do")}
-    ${q("q2","___ they go to school?","Do","Does")}
-    ${q("q3","___ she work here?","Does","Do")}
-    ${q("q4","___ you play football?","Do","Does")}
-    ${q("q5","___ it rain often?","Does","Do")}
-    ${q("q6","___ we need help?","Do","Does")}
-    ${q("q7","___ he live here?","Does","Do")}
-    ${q("q8","___ they study English?","Do","Does")}
-    ${q("q9","___ she know him?","Does","Do")}
-    ${q("q10","___ I need this book?","Do","Does")}
-    </div>`;
-  }
-
-  if (type === "present_upper") {
+if (type === "present_upper") {
   total = 10;
 
   html = `
-  <div class="card"><h3>Upper-Intermediate - Present Simple</h3>
+  <div class="card">
+    <h3>Upper-Intermediate - Mixed Test</h3>
 
-  ${q("q1","He rarely ___ coffee in the morning.","drinks","drink")}
-  ${q("q2","She ___ not usually agree with this idea.","does","do")}
-  ${q("q3","They ___ often discuss financial issues.","discuss","discusses")}
-  ${q("q4","The company ___ new policies every year.","introduces","introduce")}
-  ${q("q5","He ___ not understand the problem clearly.","does","do")}
-  ${q("q6","We ___ always check the results carefully.","do","does")}
-  ${q("q7","She ___ usually works late.","works","work")}
-  ${q("q8","The system ___ not allow manual changes.","does","do")}
-  ${q("q9","They ___ rarely make mistakes.","make","makes")}
-  ${q("q10","He ___ always knows the answer.","knows","know")}
+    ${q("q1","She usually ___ her tasks on time.","completes","complete")}
+    ${q("q2","___ he work in this company?","Does","Do")}
+    ${q("q3","They often ___ financial reports.","prepare","prepares")}
+    ${q("q4","He ___ not agree with this decision.","does","do")}
+    ${q("q5","She always ___ the truth.","tells","tell")}
+    ${q("q6","___ they attend meetings regularly?","Do","Does")}
+    ${q("q7","The system usually ___ data automatically.","processes","process")}
+    ${q("q8","He rarely ___ mistakes in reports.","makes","make")}
+    ${q("q9","___ she know the answer?","Does","Do")}
+    ${q("q10","They ___ not understand the situation.","do","does")}
 
   </div>`;
 }
+
+
   document.getElementById("testArea").innerHTML = html;
   document.getElementById("result").innerText = "";
 }
